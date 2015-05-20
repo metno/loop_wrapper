@@ -1,0 +1,23 @@
+
+Thomas Lavergne, met.no/FoU, 18.05.2015
+
+List of possible enhancements, with no priority order:
+
+*) Choose an Open Source License
+
+*) Git environment (gitlab.met.no, github?)
+
+*) Write some test suite
+
+*) Upload to MET's main precise and hardy repos
+
+*) Extend --every to accept --every 1M (month), --every 2Y (year), --every 3H (hours), etc...
+
+*) Add a -Q option to automatically prepare and submit a qsub task (lustre)
+
+*) Add a {g:} construct that expands to `basename {f:}`
+
+And when they are implemented:
+
+* (18.05.2015, 2.2.0) Make Ctrl-C interrupt all parallel subtasks
+

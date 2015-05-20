@@ -1,0 +1,271 @@
+#!/usr/bin/env python
+#============================================================
+# The MIT License (MIT)
+#
+# Copyright (c) 2014 Thomas Lavergne, MET Norway
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#============================================================
+#
+#============================================================
+# loop_wrapper
+# Thomas Lavergne, met.no/FoU, 13.02.2014
+#
+# Thomas Lavergne, met.no/FoU, 10.12.2014    :   add --every option
+# Thomas Lavergne, met.no/FoU, 27.03.2015    :   add --cpu option
+# Thomas Lavergne, met.no/FoU, 09.04.2015    :   add some examples to the help text
+# Thomas Lavergne, met.no/FoU, 09.04.2015    :   introduce version numbers
+# Thomas Lavergne, met.no/FoU, 09.04.2015    :   add --backwards
+# Thomas Lavergne, met.no/FoU, 13.04.2015    :   add -n / --dry-run
+# Thomas Lavergne, met.no/FoU, 13.04.2015    :   add shell parameter expansion (switch to v2)
+# Thomas Lavergne, met.no/FoU, 13.04.2015    :   add basic filename expantion with {f:}
+# Thomas Lavergne, met.no/FoU, 17.04.2015    :   bugfix
+# Thomas Lavergne, met.no/FoU, 18.05.2015    :   fix typo in doc
+# Thomas Lavergne, met.no/FoU, 18.05.2015    :   Ctrl-C will now interupt PLL loops nicely (kudos to http://bryceboe.com/2010/08/26/python-multiprocessing-and-keyboardinterrupt/)
+# Thomas Lavergne, met.no/FoU, 18.05.2015    :   Add my contact in the help message
+# Thomas Lavergne, met.no/FoU, 18.05.2015    :   Add an MIT license header
+#============================================================
+
+import sys
+import os
+import argparse
+from argparse import RawDescriptionHelpFormatter
+import datetime
+import subprocess
+import glob
+from multiprocessing import Pool, cpu_count
+from functools import partial
+import itertools
+
+__version__ = '2.2.1'
+__author__  = 'Thomas Lavergne'
+__license__ = 'MIT'
+
+date_fmt = "YYYYMMDD"
+
+def cpu_arg(d):
+    try:
+        d = int(d)
+    except:
+        if d == 'all':
+            return cpu_count()
+        else:
+            raise argparse.ArgumentTypeError("Not a valid type (int expected)")
+    if d == 0:
+        raise argparse.ArgumentTypeError("Value cannot be zero")
+    return d
+
+def run_shell(cmd,quiet=True,dry_run=False,ignore_CtrlC=False):
+    if not quiet:
+        dryrun_str = ''
+        if dry_run:
+            dryrun_str = '(dry-run mode)'
+        print "do {} ({})".format(dryrun_str,cmd,)
+    if not dry_run:
+        try:
+            subprocess.check_call(cmd,shell=True)
+        except KeyboardInterrupt:
+            # ignore or re-raise the Ctrl-C exception
+            if ignore_CtrlC:
+                pass
+            else:
+                raise(KeyboardInterrupt)
+
+def do_shell_parameter_expansion(cmd):
+    elems = cmd.split(' ')
+
+    # expand all the elements through globbing
+    globs = range(len(elems))
+    expansion = []
+    for ie, e in enumerate(elems):
+        globs[ie] = sorted(glob.glob(e))
+        if len(globs[ie]) == 0:
+            globs[ie] = [e,]
+        elif (len(globs[ie]) >= 2) or ((len(globs[ie]) == 1) and not os.path.samefile(globs[ie][0],e)):
+            expansion.append(ie)
+
+    # prepare a list with all the commands
+    p = itertools.product(*globs)
+
+    exp_cmd = list([' '.join(t) for t in p])
+    return exp_cmd, expansion
+
+if __name__ == '__main__':
+    """
+       loop_wrapper will run the command given as parameter on a range of dates.
+    """
+
+    # Prepare command-line parameters and help text
+    example_cmd = []
+    example_txt = []
+    example_cmd.append("loop_wrapper 20121201 20121231 ls -l /inpdir/{d:%Y/%m/%d}")
+    example_txt.append("Will list content of /inpdir/2012/12/01/, /inpdir/2012/12/02/, ... /inpdir/2012/12/31/")
+    example_cmd.append("loop_wrapper --every 5 20140101 20141231 mkdir -p /tmp/{d:%Y/%j}")
+    example_txt.append("Will create sub-directories /tmp/2014/001/, /tmp/2014/006/, ..., /tmp/2014/361/")
+    example_cmd.append("loop_wrapper --cpu all 20130101 20130131 do_something -d {d:%Y%m%d} -i <inpdir> -o <outdir>")
+    example_txt.append("Will run do_something on all days of January 2013, using all available cores on host")
+    example_cmd.append("loop_wrapper 20130101 20130131 'do_something -i <inpdir>/{d:%Y/%m/%d}/*.nc -o <outdir>/{d:%Y/%m/%d}/'")
+    example_txt.append("Will run do_something for all netcdf files from and to directories structured as YYYY/MM/DD.")
+    example_cmd.append("loop_wrapper 20130101 20130103 'nc2hdf /tmp/{d:%Y/%m/%d}/amsr*.nc {f:}.hdf'")
+    example_txt.append("Will apply the nc2hdf tool on all amsr*.nc files, and writing a .nc.hdf for each of them, at the same location.")
+    epilog = "examples:"
+    for ex in range(len(example_cmd)):
+        epilog += "\n\t{}\n\t\t{}".format(example_cmd[ex],example_txt[ex])
+    epilog += "\nnotes:\n"
+    epilog += "\to Parallel processing (--cpu) does not generally conserve execution order.\n"
+    epilog += "\to Using --backwards with --cpu does not guarantee the execution order either.\n"
+    epilog += "\to FROM_DATE is always the earliest date, and TO_DATE the latest one, even with --backwards.\n"
+    epilog += "\to When using shell parameter expansion, one should place the command in single quotes ''.\n"
+    epilog += "\nquestions, bug reports, and feature requests:\n"
+    epilog += "\tthomas.lavergne@met.no\n"
+    p = argparse.ArgumentParser("loop_wrapper",epilog=epilog,formatter_class=RawDescriptionHelpFormatter)
+    p.add_argument("--die-on-error", help="Stop looping as soon as one date fails",action='store_true',default=False)
+    p.add_argument("--every", help="Loop every N days",default=1,type=int)
+    p.add_argument("--backwards", help="Start from TO_DATE and step backwards to FROM_DATE",action='store_true')
+    p.add_argument("--quiet", help="Prevent loop_wrapper to pring anything",action='store_true',default=False)
+    p.add_argument("--cpu", help="Number of cpus for parallel runs (defaults to 1: serial run). Can be 'all', in which case all available cpus are used. Can also be a negative number, in which case it indicates how many cpus to spare. E.g. --cpu -2 means 'use all cpus but 2'.",default=1,type=cpu_arg)
+    p.add_argument("-v","--version",
+                   help="print version number and exits",action='version',
+                   version="loop_wrapper {}".format(__version__,))
+    p.add_argument("-n","--dry-run", help="If set, commands will be printed be NOT executed",action='store_true')
+    p.add_argument("FROM_DATE",help="Date to begin the loop, {}".format(date_fmt,))
+    p.add_argument("TO_DATE", help="Date to stop the loop, {}".format(date_fmt,))
+    p.add_argument("command", nargs=argparse.REMAINDER,
+                   help="Command to run in the loop. Must contain a {d:strftime} construct. May also contain paths with wildcards, in which case shell parameter expansion will be attempted for each date in the loop. May also contain constructs using {f:} (e.g. {f:}.nc) which will be replaced by the last filename (include path and extension) obtained through shell parameter expansion.  See examples and notes below.")
+    args = p.parse_args()
+    
+    if len(args.command) == 0:
+        sys.exit("Sorry, I did not get what the command was?")
+
+    CMD = ' '.join(args.command)
+    if not args.quiet:
+        print "CMD is {}".format(CMD,)
+
+    # Decode the two dates
+    try:
+        from_date = datetime.datetime.strptime(args.FROM_DATE,"%Y%m%d").date()
+        to_date   = datetime.datetime.strptime(args.TO_DATE,"%Y%m%d").date()
+    except Exception as ex:
+        sys.exit("One of the dates did not convert with {}: {}".format(date_fmt,ex,))
+
+    # Check the validity of the range
+    if from_date > to_date:
+        sys.exit("FROM_DATE should come *before* TO_DATE (even if --backwards is used).")
+
+    # Check validity of the --every flag
+    if args.every < 1:
+        sys.exit("You must provide an integer, >= 1 to --every")
+
+    # Check the validity of the CMD: 1) does it require a d= date.
+    try:
+        CMD.format(d=None)
+    except ValueError:
+        pass # this is ok: we want the CMD to fail if an invalid datet is provided
+    except Exception as ex:
+        sys.exit("Got exception when using CMD: {}".format(ex))
+    else:
+        sys.exit("It does not seem CMD uses {d:strftime-format}. Tell me how to loop through dates.")
+
+    # Check the validity of the CMD: 2) can we format it with d=today
+    try:
+        CMD.format(d=datetime.date.today(),f='{f:}')
+    except ValueError:
+        sys.exit("Got exception when using CMD with d=today: {}".format(ex))
+
+    # handle the --backwards date looping
+    delta = to_date - from_date
+    first_date = from_date
+    sign_incr  = 1
+    if args.backwards:
+        first_date = to_date
+        sign_incr = -1
+
+    # Prepare the list of all commands. This include looping on the dates, and
+    #    perform shell parameter expansion (glob)
+    cmds = []
+    for i in range(0,delta.days + 1,args.every):
+        loop_date = first_date + datetime.timedelta(days=sign_incr*i)
+        try:
+            # perform date looping:
+            loop_cmd = CMD.format(d=loop_date,f='{f:}')
+            # perform shell parameter expansion
+            loop_cmd, shell_expansion_index = do_shell_parameter_expansion(loop_cmd)
+            # perform filename replacement ({f:},...)
+            if '{f:}' in loop_cmd[0]:
+                if len(shell_expansion_index) == 0:
+                    raise ValueError("Sorry: you ask for {f:} but there is no shell parameter expansion here!")
+                for icmd,lcmd in enumerate(loop_cmd):
+                    split_cmd = lcmd.split(' ')
+                    expansion_filename = split_cmd[shell_expansion_index[-1]]
+                    lcmd = lcmd.format(f=expansion_filename)
+                    loop_cmd[icmd] = lcmd
+            cmds.extend(loop_cmd)
+        except Exception as ex:
+            msg = "Got exception with preparing cmd for {}: {}".format(loop_date,ex)
+            if args.die_on_error:
+                sys.exit("ERROR {}".format(msg))
+            else:
+                print "WARNING {}".format(msg)
+
+    dry_run_msg = ''
+    if args.dry_run:
+        dry_run_msg  = "*"*60 + "\n"
+        dry_run_msg += "\tDRY-RUN MODE! Commands are printed to screen but NOT run\n"
+        dry_run_msg += "*"*60 + "\n"
+        print dry_run_msg
+
+    # Create a "partial" command when many keyword arguments are common to all runs.
+    #    Note that ignore_CtrlC will be True for PLL processing (the childs will ignore Ctrl-C, but the
+    #    master job will capture it (see below)).
+    partial_run_shell = partial(run_shell, quiet=args.quiet, dry_run=args.dry_run, ignore_CtrlC=(args.cpu!=1))
+    if args.cpu == 1:
+        if not args.quiet:
+            print "Serial run {} from {} to {}".format(CMD,from_date,to_date)
+        for cmd in cmds:
+            try:
+                partial_run_shell(cmd)
+            except Exception as ex:
+                msg = "Got exception when running cmd {}: {}".format(cmd,ex)
+                if args.die_on_error:
+                    sys.exit("ERROR {}".format(msg))
+                else:
+                    print "WARNING {}".format(msg)
+    else:
+        if args.cpu < 0:
+            psize = cpu_count() + args.cpu
+            if psize <= 0:
+                raise ValueError("Cannot use --cpu {} on a host with only {} cpus".format(args.cpu,cpu_count()))
+        else:
+            psize = args.cpu
+        print "Parallel ({} cpu) run {} from {} to {}".format(psize,CMD,from_date,to_date)
+        pool = Pool(psize)
+        p = pool.map_async(partial_run_shell,cmds)
+        try:
+            # TODO: the parameter to get() is a time-out. Check this is a big enough number.
+            results = p.get(0xFFFF)
+        except KeyboardInterrupt:
+            pool.terminate()
+            pool.close()
+            print "Received KeyboardInterrupt (Ctrl-C). Aborting master and all PLL child processes."
+
+    if not args.quiet:
+        print "Done"
+        print dry_run_msg
+
+    sys.exit(0)

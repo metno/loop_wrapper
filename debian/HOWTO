@@ -1,0 +1,41 @@
+Short How-To from Heiko to Thomas on debianizing
+
+The most important files for you are:
+
+debian/control:  update once (or when you make large changes)
+   Here you should add the packages you need after 'Depends:'. I only
+added the standards: python. If you need additional packages, add them
+there, i.e. if you need 'python-numpy', the line should look like:
+   Depends: python-numpy, ${misc:Depends}, ${python:Depends}
+
+debian/changelog:  update for each new version and platform
+   Version information, the last number (-1) should be increase when you
+change the packaging/dependencies without any code. The first version
+should be the one of your script.
+
+The other files are boiler-plate files, I set copyright to GPL-2/ change
+if you like.
+
+
+What you need to do when you create a new version:
+
+a) update debian/changelog file
+manually, or use 'dch' from loop_wrapper_deb directory
+
+b) create a tar file including version, excluding debian (so that others
+are able to rebuild your package), e.g.
+   tar cvfz loop-wrapper_1.3.2.orig.tar.gz loop_wrapper_deb --exclude debian
+
+c) run debuild in loop_wrapper_deb, creating all the package-files
+   cd loop_wrapper_deb
+   debuild -us -uc
+
+d) upload to our repo
+   cd ..
+   dupload --to precise loop-wrapper_1.3.2-1_amd64.changes
+see https://dokit.met.no/sysdok/linux/server/utviklingsspeil_reprepro
+
+
+Package needs to be loop-wrapper, since debian doesn't allow _ in
+package names.
+

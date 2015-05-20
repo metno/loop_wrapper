@@ -1,0 +1,13 @@
+Package: loop-wrapper
+Version: 2.2.0-1
+Architecture: all
+Maintainer: Thomas Lavergne, <t.lavergne@met.no>
+Installed-Size: 42
+Depends: python
+Section: python
+Priority: optional
+Description: Create a loop over start and end dates
+ loop_wrapper will create a loop from a start-date to an end-date (possibly
+ with several days offset) and run a command for every date.
+ .
+ It allows also to run the commands in parallel on all CPUs.
