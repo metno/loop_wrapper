@@ -34,6 +34,8 @@
 # Thomas Lavergne, met.no/FoU, 18.05.2015    :   Ctrl-C will now interupt PLL loops nicely (kudos to http://bryceboe.com/2010/08/26/python-multiprocessing-and-keyboardinterrupt/)
 # Thomas Lavergne, met.no/FoU, 18.05.2015    :   Add my contact in the help message
 # Thomas Lavergne, met.no/FoU, 18.05.2015    :   Add an MIT license header
+# Thomas Lavergne, met.no/FoU, 20.05.2015    :   Re-licensing to GPLv2
+# Thomas Lavergne, met.no/FoU, 22.05.2015    :   Implement --every 6H, --every 2m, etc... This breaks --backwards
 #============================================================
 
 import sys
@@ -46,14 +48,43 @@ import glob
 from multiprocessing import Pool, cpu_count
 from functools import partial
 import itertools
+from dateutil import rrule
 
-__version__ = '2.2.1'
+__version__ = '2.3.0'
 __author__  = 'Thomas Lavergne'
 __license__ = 'GPL2'
 
 date_fmt = "YYYYMMDD"
 
+def every_arg(d):
+    """ Decode the argument to --every flag """
+    try:
+        d = int(d)
+        rr = rrule.DAILY
+    except:
+        if d.endswith('d'):
+            rr = rrule.DAILY
+        elif d.endswith('H'):
+            rr = rrule.HOURLY
+        elif d.endswith('M'):
+            rr = rrule.MINUTELY
+        elif d.endswith('S'):
+            rr = rrule.SECONDLY
+        elif d.endswith('m'):
+            rr = rrule.MONTHLY
+        elif d.endswith('Y'):
+            rr = rrule.YEARLY
+        elif d.endswith('w'):
+            rr = rrule.WEEKLY
+        else:
+            raise argparse.ArgumentTypeError("Unsupport parameter to --every")
+        d = int(d[:-1])
+    if d <= 0:
+        raise argparse.ArgumentTypeError("Value cannot be negative or zero (got {})".format(d,))
+    return (d, rr)
+
 def cpu_arg(d):
+    """ Decode the argument to --cpu flag """
     try:
         d = int(d)
     except:
@@ -130,7 +161,7 @@ if __name__ == '__main__':
     epilog += "\tthomas.lavergne@met.no\n"
     p = argparse.ArgumentParser("loop_wrapper",epilog=epilog,formatter_class=RawDescriptionHelpFormatter)
     p.add_argument("--die-on-error", help="Stop looping as soon as one date fails",action='store_true',default=False)
-    p.add_argument("--every", help="Loop every N days",default=1,type=int)
+    p.add_argument("--every", help="Loop every n units. Default unit is d:days, but H:hourly, m:monthly, Y:yearly are supported. For example '--every 6H' (6-hourly steps) or '--every 3m' (steps of 3 months)",default=(1,rrule.DAILY),type=every_arg)
     p.add_argument("--backwards", help="Start from TO_DATE and step backwards to FROM_DATE",action='store_true')
     p.add_argument("--quiet", help="Prevent loop_wrapper to pring anything",action='store_true',default=False)
     p.add_argument("--cpu", help="Number of cpus for parallel runs (defaults to 1: serial run). Can be 'all', in which case all available cpus are used. Can also be a negative number, in which case it indicates how many cpus to spare. E.g. --cpu -2 means 'use all cpus but 2'.",default=1,type=cpu_arg)
@@ -143,6 +174,9 @@ if __name__ == '__main__':
     p.add_argument("command", nargs=argparse.REMAINDER,
                    help="Command to run in the loop. Must contain a {d:strftime} construct. May also contain paths with wildcards, in which case shell parameter expansion will be attempted for each date in the loop. May also contain constructs using {f:} (e.g. {f:}.nc) which will be replaced by the last filename (include path and extension) obtained through shell parameter expansion.  See examples and notes below.")
     args = p.parse_args()
+
+    if args.backwards:
+        sys.exit("Sorry, --backwards was turned off for now")
     
     if len(args.command) == 0:
         sys.exit("Sorry, I did not get what the command was?")
@@ -161,10 +195,6 @@ if __name__ == '__main__':
     # Check the validity of the range
     if from_date > to_date:
         sys.exit("FROM_DATE should come *before* TO_DATE (even if --backwards is used).")
-
-    # Check validity of the --every flag
-    if args.every < 1:
-        sys.exit("You must provide an integer, >= 1 to --every")
 
     # Check the validity of the CMD: 1) does it require a d= date.
     try:
@@ -185,16 +215,17 @@ if __name__ == '__main__':
     # handle the --backwards date looping
     delta = to_date - from_date
     first_date = from_date
-    sign_incr  = 1
+    last_date  = to_date
+    sign = +1
     if args.backwards:
         first_date = to_date
-        sign_incr = -1
+        last_date  = from_date
+        sign = -1
 
     # Prepare the list of all commands. This include looping on the dates, and
     #    perform shell parameter expansion (glob)
     cmds = []
-    for i in range(0,delta.days + 1,args.every):
-        loop_date = first_date + datetime.timedelta(days=sign_incr*i)
+    for loop_date in rrule.rrule(args.every[1], interval=args.every[0], dtstart=first_date, until=last_date):
         try:
             # perform date looping:
             loop_cmd = CMD.format(d=loop_date,f='{f:}')
