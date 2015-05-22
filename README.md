@@ -8,6 +8,8 @@ loop_wrapper -h
 For questions, bug reports and feature requests, contact:
 thomas.lavergne@met.no
 
-loop_wrapper was developed by Thomas Lavergne at the Norwegian Meteorological
+loop_wrapper is maintained by Thomas Lavergne at the Norwegian Meteorological
 Institute since 2013.
+
+Licensed under GPLv2
 
