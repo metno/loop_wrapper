@@ -287,7 +287,10 @@ if __name__ == '__main__':
                 raise ValueError("Cannot use --cpu {} on a host with only {} cpus".format(args.cpu,cpu_count()))
         else:
             psize = args.cpu
-        print "Parallel ({} cpu) run {} from {} to {}".format(psize,CMD,args.FROM_DATE,args.TO_DATE)
+
+        if not args.quiet:
+            print "Parallel ({} cpu) run {} from {} to {}".format(psize,CMD,args.FROM_DATE,args.TO_DATE)
+
         pool = Pool(psize)
         p = pool.map_async(partial_run_shell,cmds)
         try:
