@@ -14,15 +14,27 @@ class Test_DateParse(unittest.TestCase):
     # this stop_date will be used for all tests
     stop_date = "20100315"
 
-    def test_parse_wrongFmt(self):
+    def test_parse_wrongFmt2(self):
         """ Test date parsing of dates with unsupported format """
-        cmd = [exe,'--quiet','2010-03-14',self.stop_date,'echo','{d:%Y%m%d}']
+        sdate = '2010-03-14'
+        cmd = [exe,'--quiet',sdate,self.stop_date,'echo','{d:%Y%m%d}']
         try:
             out = check_output(cmd,stderr=STDOUT)
             caught = False
         except CalledProcessError:
             caught= True
-        self.assertTrue(caught,msg="Failed to bark at un-supported date format!")
+        self.assertTrue(caught,msg="Failed to bark at un-supported date format ({})!".format(sdate,))
+
+    def test_parse_wrongFmt1(self):
+        """ Test date parsing of dates with unsupported format """
+        sdate = '200403010'
+        cmd = [exe,'--quiet',sdate,self.stop_date,'echo','{d:%Y%m%d}']
+        try:
+            out = check_output(cmd,stderr=STDOUT)
+            caught = False
+        except CalledProcessError:
+            caught= True
+        self.assertTrue(caught,msg="Failed to bark at un-supported date format ({})!".format(sdate,))
 
     def test_parse_wrongDate(self):
         """ Test date parsing of unexisting dates """

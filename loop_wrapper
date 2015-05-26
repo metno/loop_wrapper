@@ -36,7 +36,9 @@
 # Thomas Lavergne, met.no/FoU, 18.05.2015    :   Add an MIT license header
 # Thomas Lavergne, met.no/FoU, 20.05.2015    :   Re-licensing to GPLv2
 # Thomas Lavergne, met.no/FoU, 22.05.2015    :   Implement --every 6H, --every 2m, etc... This breaks --backwards
-# Thomas Lavergne, met.no/FoU, 25.05.2015    :   Allow several more formats for the START/STOP dates
+# Thomas Lavergne, met.no/FoU, 26.05.2015    :   Allow several more formats for the START/STOP dates
+# Thomas Lavergne, met.no/FoU, 26.05.2015    :   Clean-up in the error handling (return code, --die-on-error, etc...)
+#============================================================
 #============================================================
 
 import sys
@@ -47,6 +49,7 @@ import datetime
 import subprocess
 import glob
 from multiprocessing import Pool, cpu_count
+from collections import OrderedDict
 from functools import partial
 import itertools
 from dateutil import rrule
@@ -56,13 +59,34 @@ __author__  = 'Thomas Lavergne'
 __license__ = 'GPL2'
 
 date_fmts = ('%Y','%Y%m','%Y%m%d','%Y%m%d%H','%Y%m%d%H%M','%Y%m%d%H%M%S',)
+date_fmts_rep = {'Y':4,'m':2,'d':2,'H':2,'M':2,'S':2}
 date_fmts_msg = 'Supported formats: ' + ','.join([fmt.replace('%','%%') for fmt in date_fmts])
+
+def date_str_len(fmt):
+    """ Transforms %Y%m into YYYYMM """
+    if (len(fmt) % 2) != 0:
+        raise ValueError("The date formats should only have even lengths ({} has length {})".format(fmt,len(fmt)))
+    new_fmt = ''
+    for i in range(len(fmt)/2):
+        lettercode = fmt[2*i+1:2*i+2]
+        try:
+            new_fmt += lettercode * date_fmts_rep[lettercode]
+        except KeyError as k:
+            raise ValueError("Un-supported letter code for date parsing: {}".format(k,))
+    return new_fmt
 
 def date_arg(d):
     """ Decode/parse the START/STOP dates """
 
+    # basic test
+    if (len(d) % 2) != 0:
+        raise argparse.ArgumentTypeError("This date format is not supported (odd number of charaters)")
+
     # Try all formats, returning at first match.
     for fmt in date_fmts:
+        # we do not try decoding if the length of the format is not the length of the datestr
+        if len(date_str_len(fmt)) != len(d):
+            continue
         try:
             r = datetime.datetime.strptime(d,fmt)
             return r
@@ -71,7 +95,7 @@ def date_arg(d):
                 pass
             else:
                 # this will stop parsing for invalid dates (e.g. 20090229 or 20101501)
-                raise ex
+                raise argparse.ArgumentTypeError(ex.__str__())
 
     # Raise exception if no format match
     raise argparse.ArgumentTypeError("Unsupport format for date {}".format(d,))
@@ -255,10 +279,7 @@ if __name__ == '__main__':
             cmds.extend(loop_cmd)
         except Exception as ex:
             msg = "Got exception with preparing cmd for {}: {}".format(loop_date,ex)
-            if args.die_on_error:
-                sys.exit("ERROR {}".format(msg))
-            else:
-                print "WARNING {}".format(msg)
+            sys.exit("ERROR {}".format(msg))
 
     dry_run_msg = ''
     if args.dry_run:
@@ -266,6 +287,9 @@ if __name__ == '__main__':
         dry_run_msg += "\tDRY-RUN MODE! Commands are printed to screen but NOT run\n"
         dry_run_msg += "*"*60 + "\n"
         print dry_run_msg
+
+    # Keep track if all runs went fine. If not we want to return non-zero code
+    all_runs_ok = True
 
     # Create a "partial" command when many keyword arguments are common to all runs.
     #    Note that ignore_CtrlC will be True for PLL processing (the childs will ignore Ctrl-C, but the
@@ -279,8 +303,10 @@ if __name__ == '__main__':
                 partial_run_shell(cmd)
             except Exception as ex:
                 msg = "Got exception when running cmd {}: {}".format(cmd,ex)
+                all_runs_ok = False
                 if args.die_on_error:
-                    sys.exit("ERROR {}".format(msg))
+                    print "ERROR {}".format(msg)
+                    break
                 else:
                     print "WARNING {}".format(msg)
     else:
@@ -300,6 +326,7 @@ if __name__ == '__main__':
             # TODO: the parameter to get() is a time-out. Check this is a big enough number.
             results = p.get(0xFFFF)
         except KeyboardInterrupt:
+            all_runs_ok = False
             pool.terminate()
             pool.close()
             print "Received KeyboardInterrupt (Ctrl-C). Aborting master and all PLL child processes."
@@ -308,4 +335,7 @@ if __name__ == '__main__':
         print "Done"
         print dry_run_msg
 
-    sys.exit(0)
+    if all_runs_ok:
+        sys.exit(0)
+    else:
+        sys.exit("Something went wrong!")

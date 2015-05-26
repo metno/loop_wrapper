@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [[ $1 -eq '20100303' ]]; then
+   echo "ERROR: doer1 fails on $1"
+   exit 1;
+else
+   echo "process $1"
+   exit 0;
+fi
+
