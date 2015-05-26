@@ -47,6 +47,15 @@ class Test_ShellExpansion_noF(unittest.TestCase):
         out = check_output(cmd)
         lines = out.splitlines()
         self.assertEqual(len(lines),12,msg='Basic shell expansion with "[A-B]" failed')
+        # Test that the files exists
+        ok_lines = 0
+        for l in lines:
+            fn = (l.split(' '))[-1]
+            if os.path.exists(fn):
+                ok_lines += 1
+            else:
+                print "ERROR: file {} should exist!".format(fn,)
+        self.assertEqual(ok_lines,12,msg='Basic shell expansion failed')
 
     def test_shell_expansion_Qmark_noF(self):
         """ Test combining date looping and shell parameter expansion  (with '?') """
