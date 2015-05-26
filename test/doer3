@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [[ $# != 2 ]]; then
+   echo "ERROR: doer3 allows only 2 parameters at a time."
+   exit 1;
+else
+   echo "process $1 -> $2"
+   exit 0;
+fi
+
