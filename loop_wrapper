@@ -67,7 +67,11 @@ def date_arg(d):
             r = datetime.datetime.strptime(d,fmt)
             return r
         except Exception as ex:
-            pass
+            if 'unconverted data remains' in ex.__str__():
+                pass
+            else:
+                # this will stop parsing for invalid dates (e.g. 20090229 or 20101501)
+                raise ex
 
     # Raise exception if no format match
     raise argparse.ArgumentTypeError("Unsupport format for date {}".format(d,))
@@ -200,7 +204,6 @@ if __name__ == '__main__':
     CMD = ' '.join(args.command)
     if not args.quiet:
         print "CMD is {}".format(CMD,)
-
 
     # Check the validity of the range
     if args.FROM_DATE > args.TO_DATE:
