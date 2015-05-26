@@ -49,7 +49,6 @@ import datetime
 import subprocess
 import glob
 from multiprocessing import Pool, cpu_count
-from collections import OrderedDict
 from functools import partial
 import itertools
 from dateutil import rrule
@@ -149,6 +148,8 @@ def run_shell(cmd,quiet=True,dry_run=False,ignore_CtrlC=False):
     if not dry_run:
         try:
             subprocess.check_call(cmd,shell=True)
+        except subprocess.CalledProcessError as ex:
+            raise ex
         except KeyboardInterrupt:
             # ignore or re-raise the Ctrl-C exception
             if ignore_CtrlC:
@@ -330,6 +331,11 @@ if __name__ == '__main__':
             pool.terminate()
             pool.close()
             print "Received KeyboardInterrupt (Ctrl-C). Aborting master and all PLL child processes."
+        except Exception as ex:
+            all_runs_ok = False
+            pool.terminate()
+            pool.close()
+            print "Caught a CalledProcessError via Pool's TypeError"
 
     if not args.quiet:
         print "Done"
