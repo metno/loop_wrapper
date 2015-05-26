@@ -4,7 +4,6 @@ import unittest
 import sys
 import os
 from subprocess import check_output, STDOUT
-from datetime import date
 
 exe_dir = os.path.realpath(os.path.join(os.path.dirname(__file__),'..'))
 exe = os.path.join(exe_dir,'loop_wrapper')
