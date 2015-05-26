@@ -139,7 +139,8 @@ def cpu_arg(d):
         raise argparse.ArgumentTypeError("Value cannot be zero")
     return d
 
-def run_shell(cmd,quiet=True,dry_run=False,ignore_CtrlC=False):
+def run_shell(cmd,quiet=True,dry_run=False,ignore_CtrlC=False,die_on_error=True):
+    err = 0
     if not quiet:
         dryrun_str = ''
         if dry_run:
@@ -149,13 +150,17 @@ def run_shell(cmd,quiet=True,dry_run=False,ignore_CtrlC=False):
         try:
             subprocess.check_call(cmd,shell=True)
         except subprocess.CalledProcessError as ex:
-            raise ex
+            err = 1
+            if die_on_error:
+                raise Exception(ex.__class__.__name__ + ": " +str(ex))
         except KeyboardInterrupt:
             # ignore or re-raise the Ctrl-C exception
+            err = 1
             if ignore_CtrlC:
                 pass
             else:
                 raise(KeyboardInterrupt)
+    return err
 
 def do_shell_parameter_expansion(cmd):
     elems = cmd.split(' ')
@@ -295,21 +300,25 @@ if __name__ == '__main__':
     # Create a "partial" command when many keyword arguments are common to all runs.
     #    Note that ignore_CtrlC will be True for PLL processing (the childs will ignore Ctrl-C, but the
     #    master job will capture it (see below)).
-    partial_run_shell = partial(run_shell, quiet=args.quiet, dry_run=args.dry_run, ignore_CtrlC=(args.cpu!=1))
+    partial_run_shell = partial(run_shell, quiet=args.quiet, dry_run=args.dry_run, 
+                                ignore_CtrlC=(args.cpu!=1),die_on_error=args.die_on_error)
     if args.cpu == 1:
         if not args.quiet:
             print "Serial run {} from {} to {}".format(CMD,args.FROM_DATE,args.TO_DATE)
-        for cmd in cmds:
+        results = [0,]*len(cmds,)
+        for icmd, cmd in enumerate(cmds):
             try:
-                partial_run_shell(cmd)
+                err = partial_run_shell(cmd)
+                results[icmd] = err
             except Exception as ex:
+                results[icmd] = 1
                 msg = "Got exception when running cmd {}: {}".format(cmd,ex)
-                all_runs_ok = False
                 if args.die_on_error:
                     print "ERROR {}".format(msg)
                     break
                 else:
                     print "WARNING {}".format(msg)
+        all_runs_ok = not sum(results)
     else:
         if args.cpu < 0:
             psize = cpu_count() + args.cpu
@@ -326,6 +335,7 @@ if __name__ == '__main__':
         try:
             # TODO: the parameter to get() is a time-out. Check this is a big enough number.
             results = p.get(0xFFFF)
+            all_runs_ok = not sum(results)
         except KeyboardInterrupt:
             all_runs_ok = False
             pool.terminate()
@@ -333,9 +343,9 @@ if __name__ == '__main__':
             print "Received KeyboardInterrupt (Ctrl-C). Aborting master and all PLL child processes."
         except Exception as ex:
             all_runs_ok = False
+            print "Caught an Exception in the pool ({})".format(ex,)
             pool.terminate()
             pool.close()
-            print "Caught a CalledProcessError via Pool's TypeError"
 
     if not args.quiet:
         print "Done"
