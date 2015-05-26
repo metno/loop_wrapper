@@ -1,3 +1,13 @@
+loop-wrapper (2.3.1-1) precise; urgency=low
+
+  * Enable alternative timesteps for looping (year, month, hour, ...) with the
+    --every flag
+  * Allow more dateformats for the START and STOP dates (e.g. YYYYMM or
+    YYYYMMDDHH)
+  * Rework the error handling and --die-on-error flag
+  * Unit Testing, GitHub, GPLv2,...
+
+ -- Thomas Lavergne <thomas.lavergne@met.no> Tue, 26 May 2015 22:47:08 +0200
 loop-wrapper (2.2.0-1) precise; urgency=low
 
   * Ctrl-C to immediately interrupt parent and PLL child processes
