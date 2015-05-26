@@ -36,6 +36,7 @@
 # Thomas Lavergne, met.no/FoU, 18.05.2015    :   Add an MIT license header
 # Thomas Lavergne, met.no/FoU, 20.05.2015    :   Re-licensing to GPLv2
 # Thomas Lavergne, met.no/FoU, 22.05.2015    :   Implement --every 6H, --every 2m, etc... This breaks --backwards
+# Thomas Lavergne, met.no/FoU, 25.05.2015    :   Allow several more formats for the START/STOP dates
 #============================================================
 
 import sys
@@ -50,11 +51,26 @@ from functools import partial
 import itertools
 from dateutil import rrule
 
-__version__ = '2.3.0'
+__version__ = '2.3.1'
 __author__  = 'Thomas Lavergne'
 __license__ = 'GPL2'
 
-date_fmt = "YYYYMMDD"
+date_fmts = ('%Y','%Y%m','%Y%m%d','%Y%m%d%H','%Y%m%d%H%M','%Y%m%d%H%M%S',)
+date_fmts_msg = 'Supported formats: ' + ','.join([fmt.replace('%','%%') for fmt in date_fmts])
+
+def date_arg(d):
+    """ Decode/parse the START/STOP dates """
+
+    # Try all formats, returning at first match.
+    for fmt in date_fmts:
+        try:
+            r = datetime.datetime.strptime(d,fmt)
+            return r
+        except Exception as ex:
+            pass
+
+    # Raise exception if no format match
+    raise argparse.ArgumentTypeError("Unsupport format for date {}".format(d,))
 
 def every_arg(d):
     """ Decode the argument to --every flag """
@@ -169,8 +185,8 @@ if __name__ == '__main__':
                    help="print version number and exits",action='version',
                    version="loop_wrapper {}".format(__version__,))
     p.add_argument("-n","--dry-run", help="If set, commands will be printed be NOT executed",action='store_true')
-    p.add_argument("FROM_DATE",help="Date to begin the loop, {}".format(date_fmt,))
-    p.add_argument("TO_DATE", help="Date to stop the loop, {}".format(date_fmt,))
+    p.add_argument("FROM_DATE",help="Earliest date in the loop. " + date_fmts_msg,type=date_arg)
+    p.add_argument("TO_DATE", help="Latest date in the loop. " + date_fmts_msg,type=date_arg)
     p.add_argument("command", nargs=argparse.REMAINDER,
                    help="Command to run in the loop. Must contain a {d:strftime} construct. May also contain paths with wildcards, in which case shell parameter expansion will be attempted for each date in the loop. May also contain constructs using {f:} (e.g. {f:}.nc) which will be replaced by the last filename (include path and extension) obtained through shell parameter expansion.  See examples and notes below.")
     args = p.parse_args()
@@ -185,15 +201,9 @@ if __name__ == '__main__':
     if not args.quiet:
         print "CMD is {}".format(CMD,)
 
-    # Decode the two dates
-    try:
-        from_date = datetime.datetime.strptime(args.FROM_DATE,"%Y%m%d").date()
-        to_date   = datetime.datetime.strptime(args.TO_DATE,"%Y%m%d").date()
-    except Exception as ex:
-        sys.exit("One of the dates did not convert with {}: {}".format(date_fmt,ex,))
 
     # Check the validity of the range
-    if from_date > to_date:
+    if args.FROM_DATE > args.TO_DATE:
         sys.exit("FROM_DATE should come *before* TO_DATE (even if --backwards is used).")
 
     # Check the validity of the CMD: 1) does it require a d= date.
@@ -213,13 +223,12 @@ if __name__ == '__main__':
         sys.exit("Got exception when using CMD with d=today: {}".format(ex))
 
     # handle the --backwards date looping
-    delta = to_date - from_date
-    first_date = from_date
-    last_date  = to_date
+    first_date = args.FROM_DATE
+    last_date  = args.TO_DATE
     sign = +1
     if args.backwards:
-        first_date = to_date
-        last_date  = from_date
+        first_date = args.TO_DATE
+        last_date  = args.FROM_DATE
         sign = -1
 
     # Prepare the list of all commands. This include looping on the dates, and
@@ -261,7 +270,7 @@ if __name__ == '__main__':
     partial_run_shell = partial(run_shell, quiet=args.quiet, dry_run=args.dry_run, ignore_CtrlC=(args.cpu!=1))
     if args.cpu == 1:
         if not args.quiet:
-            print "Serial run {} from {} to {}".format(CMD,from_date,to_date)
+            print "Serial run {} from {} to {}".format(CMD,args.FROM_DATE,args.TO_DATE)
         for cmd in cmds:
             try:
                 partial_run_shell(cmd)
@@ -278,7 +287,7 @@ if __name__ == '__main__':
                 raise ValueError("Cannot use --cpu {} on a host with only {} cpus".format(args.cpu,cpu_count()))
         else:
             psize = args.cpu
-        print "Parallel ({} cpu) run {} from {} to {}".format(psize,CMD,from_date,to_date)
+        print "Parallel ({} cpu) run {} from {} to {}".format(psize,CMD,args.FROM_DATE,args.TO_DATE)
         pool = Pool(psize)
         p = pool.map_async(partial_run_shell,cmds)
         try:
