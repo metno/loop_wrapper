@@ -35,6 +35,7 @@ class Test_ParallelRun(unittest.TestCase):
         self.assertEqual(len(lines),17,msg='Basic parallel date looping (cpu all) failed (un-expected looping)!')
         # test they do NOT have all same PPID (parent's PID)
         s = set([(p.split(' '))[1] for p in lines])
+        print len(s), cpu_count(), s
         self.assertEqual(len(s),cpu_count(),msg='Basic parallel date looping (cpu all) failed (used {} cpus)'.format(len(s)))
 
     def test_PLL_2(self):
