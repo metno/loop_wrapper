@@ -15,7 +15,6 @@ class Test_DieOnError(unittest.TestCase):
        We use script ./doer1 that barks on one date
     """
 
-
     def test_DoE_PLL_withFlag(self):
         """ Test pll run with --die-on-error """
         cmd = exe + ' --die-on-error --cpu 2 --quiet 20100225 20100310 '+ doer + ' {d:%Y%m%d}'
@@ -29,6 +28,9 @@ class Test_DieOnError(unittest.TestCase):
             elif l.startswith('ERROR:'):
                 fail_run += 1
 
+        print out
+        print err
+        print ok_run, fail_run
         self.assertEqual((ok_run+fail_run),9,msg='Did not spawn expected number of "doer1" runs')
         self.assertEqual(ok_run,8,msg='Did not receive expected number of SUCCESS "doer1" runs')
         self.assertEqual(fail_run,1,msg='Did not receive expected number of ERROR "doer1" runs')
