@@ -31,7 +31,7 @@ class Test_ParallelRun(unittest.TestCase):
         out = check_output(cmd,shell=True)
         lines = out.splitlines()
         # test we have the expected number of subprocesses
-        print len(lines), lines
+        print len(lines), sorted(lines)
         self.assertEqual(len(lines),17,msg='Basic parallel date looping (cpu all) failed (un-expected looping)!')
         # test they do NOT have all same PPID (parent's PID)
         s = set([(p.split(' '))[1] for p in lines])
