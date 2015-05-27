@@ -28,11 +28,10 @@ class Test_DieOnError(unittest.TestCase):
             elif l.startswith('ERROR:'):
                 fail_run += 1
 
-        print out
-        print err
-        print ok_run, fail_run
-        self.assertEqual((ok_run+fail_run),9,msg='Did not spawn expected number of "doer1" runs')
-        self.assertEqual(ok_run,8,msg='Did not receive expected number of SUCCESS "doer1" runs')
+        # The ordering of the runs is out of control, so we cannot predict the number of runs
+        #   that will take place before the --die-on-error is triggered.
+        #self.assertEqual((ok_run+fail_run),9,msg='Did not spawn expected number of "doer1" runs')
+        #self.assertEqual(ok_run,8,msg='Did not receive expected number of SUCCESS "doer1" runs')
         self.assertEqual(fail_run,1,msg='Did not receive expected number of ERROR "doer1" runs')
         self.assertNotEqual(p.returncode,0,msg='This run should have returned non-zero return code (got {})'.format(p.returncode,))
 
