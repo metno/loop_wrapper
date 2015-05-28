@@ -3,11 +3,7 @@ Thomas Lavergne, met.no/FoU, 18.05.2015
 
 List of possible enhancements, with no priority order:
 
-*) Write some test suite
-
 *) Upload to MET's hardy repo
-
-*) Extend --every to accept --every 1M (month), --every 2Y (year), --every 3H (hours), etc...
 
 *) Add a -Q option to automatically prepare and submit a qsub task (lustre)
 
@@ -19,4 +15,6 @@ And when they are implemented:
 * (19.05.2015) Uploaded to MET's main precise debian repo
 * (20.05.2015) Choose an Open Source License : GPLv2 (because this is what MET uses)
 * (20.05.2015) GitHub, with the metno organization (https://github.com/metno/loop_wrapper)
+* (26.05.2015) The test suite is now covering quite a lot.
+* (24.05.2015) Extend --every to accept --every 1M (month), --every 2Y (year), --every 3H (hours), etc...
 
