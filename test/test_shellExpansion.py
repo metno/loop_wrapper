@@ -16,6 +16,24 @@ class Test_ShellExpansion_wF(unittest.TestCase):
     """ Test the Shell Parameter Expansion, with {f:} reference """
 
     def test_shell_expansion_wF(self):
+        """ Test combining date looping, shell parameter expansion  (with '?') and {F:} referencing """
+        cmd = [exe,'--quiet','20051228','20060102',doer3,os.path.join(tst_dir,'{d:%Y}','tst_?_{d:%Y%m%d}.tar'),'/tmp/{F:}.gz']
+        out = check_output(cmd)
+        lines = out.splitlines()
+        self.assertEqual(len(lines),18,msg='Basic shell expansion with "?" failed')
+        # Test the {F:} substitution worked as expected
+        ok_lines = 0
+        for l in lines:
+            if l.startswith('process '):
+                from_file = (l.split())[1]
+                to_file   = (l.split())[-1]
+                if from_file.endswith('.tar') and os.path.exists(from_file) and \
+                   to_file == os.path.join('/tmp',os.path.basename(from_file))+'.gz':
+                    ok_lines += 1
+
+        self.assertEqual(ok_lines,18,msg='Filename substitution with {F:} failed')
+
+    def test_shell_expansion_wf(self):
         """ Test combining date looping, shell parameter expansion  (with '?') and {f:} referencing """
         cmd = [exe,'--quiet','20051228','20060102',doer3,os.path.join(tst_dir,'{d:%Y}','tst_?_{d:%Y%m%d}.tar'),'{f:}.gz']
         out = check_output(cmd)
@@ -25,7 +43,10 @@ class Test_ShellExpansion_wF(unittest.TestCase):
         ok_lines = 0
         for l in lines:
             if l.startswith('process '):
-                if '.tar' in l and '.tar.gz' in l:
+                from_file = (l.split())[1]
+                to_file   = (l.split())[-1]
+                if from_file.endswith('.tar') and os.path.exists(from_file) and \
+                   to_file == from_file+'.gz':
                     ok_lines += 1
 
         self.assertEqual(ok_lines,18,msg='Filename substitution with {f:} failed')
