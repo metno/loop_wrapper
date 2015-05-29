@@ -11,7 +11,7 @@ X-Python-Version: >= 2.6
 Package: loop-wrapper
 Architecture: all
 Section: python
-Depends: python-dateutil ${misc:Depends}, ${python:Depends}
+Depends: python-dateutil, ${misc:Depends}, ${python:Depends}
 Description: Create a loop over start and end dates
  loop_wrapper will create a loop from a start-date to an end-date (possibly 
  with several days offset) and run a command for every date.
