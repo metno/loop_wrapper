@@ -38,6 +38,8 @@
 # Thomas Lavergne, met.no/FoU, 22.05.2015    :   Implement --every 6H, --every 2m, etc... This breaks --backwards
 # Thomas Lavergne, met.no/FoU, 26.05.2015    :   Allow several more formats for the START/STOP dates
 # Thomas Lavergne, met.no/FoU, 26.05.2015    :   Clean-up in the error handling (return code, --die-on-error, etc...)
+# Thomas Lavergne, met.no/FoU, 28.05.2015    :   Introduce {F:} that will be substitute by basename({f:})
+# Thomas Lavergne, met.no/FoU, 28.05.2015    :   API change: now one must enclose shell expansion constructs inside []
 #============================================================
 #============================================================
 
@@ -53,7 +55,7 @@ from functools import partial
 import itertools
 from dateutil import rrule
 
-__version__ = '2.3.1'
+__version__ = '3.0.0'
 __author__  = 'Thomas Lavergne'
 __license__ = 'GPLv2'
 
@@ -162,24 +164,45 @@ def run_shell(cmd,quiet=True,dry_run=False,ignore_CtrlC=False,die_on_error=True)
                 raise(KeyboardInterrupt)
     return err
 
+def has_shell_parameter_expansion(cmd):
+    elems = cmd.split()
+    ret = -1
+    for ie, e in enumerate(elems):
+        if e.startswith('[') and e.endswith(']'):
+            if len(e) == 2:
+                raise ValueError("Cannot work with empty shell expansion construct")
+            if ret != -1:
+                raise ValueError("You can only have 1 shell expansion construct '[]'")
+            ret = ie
+    return ret
+
 def do_shell_parameter_expansion(cmd):
-    elems = cmd.split(' ')
+    elems = cmd.split()
 
     # expand all the elements through globbing
     globs = range(len(elems))
-    expansion = []
+    shell_expansion_success = False
     for ie, e in enumerate(elems):
-        globs[ie] = sorted(glob.glob(e))
-        if len(globs[ie]) == 0:
+        if e.startswith('[') and e.endswith(']'):
+            e = e[1:-1]
+            globs[ie] = sorted(glob.glob(e))
+            if len(globs[ie]) == 0:
+                # e.g. '-i' or '{f:}',... something that does not glob to an existing path
+                globs[ie] = [e,]
+            elif (len(globs[ie]) >= 1):
+                # every glob that expands to a path (or collection of paths)
+                shell_expansion_success = True
+            #elif ((len(globs[ie]) == 1) and not os.path.samefile(globs[ie][0],e)):
+            #    shell_expansion_success = True
+        else:
             globs[ie] = [e,]
-        elif (len(globs[ie]) >= 2) or ((len(globs[ie]) == 1) and not os.path.samefile(globs[ie][0],e)):
-            expansion.append(ie)
 
     # prepare a list with all the commands
     p = itertools.product(*globs)
 
     exp_cmd = list([' '.join(t) for t in p])
-    return exp_cmd, expansion
+
+    return exp_cmd, shell_expansion_success
 
 if __name__ == '__main__':
     """
@@ -191,14 +214,14 @@ if __name__ == '__main__':
     example_txt = []
     example_cmd.append("loop_wrapper 20121201 20121231 ls -l /inpdir/{d:%Y/%m/%d}")
     example_txt.append("Will list content of /inpdir/2012/12/01/, /inpdir/2012/12/02/, ... /inpdir/2012/12/31/")
-    example_cmd.append("loop_wrapper --every 5 20140101 20141231 mkdir -p /tmp/{d:%Y/%j}")
+    example_cmd.append("loop_wrapper --every 5d 20140101 20141231 mkdir -p /tmp/{d:%Y/%j}")
     example_txt.append("Will create sub-directories /tmp/2014/001/, /tmp/2014/006/, ..., /tmp/2014/361/")
     example_cmd.append("loop_wrapper --cpu all 20130101 20130131 do_something -d {d:%Y%m%d} -i <inpdir> -o <outdir>")
     example_txt.append("Will run do_something on all days of January 2013, using all available cores on host")
-    example_cmd.append("loop_wrapper 20130101 20130131 'do_something -i <inpdir>/{d:%Y/%m/%d}/*.nc -o <outdir>/{d:%Y/%m/%d}/'")
+    example_cmd.append("loop_wrapper 20130101 20130131 'do_something -i [<inpdir>/{d:%Y/%m/%d}/*.nc] -o <outdir>/{d:%Y/%m/%d}/'")
     example_txt.append("Will run do_something for all netcdf files from and to directories structured as YYYY/MM/DD.")
-    example_cmd.append("loop_wrapper 20130101 20130103 'nc2hdf /tmp/{d:%Y/%m/%d}/amsr*.nc {f:}.hdf'")
-    example_txt.append("Will apply the nc2hdf tool on all amsr*.nc files, and writing a .nc.hdf for each of them, at the same location.")
+    example_cmd.append("loop_wrapper 20130101 20130103 'nc2hdf [/tmp/{d:%Y/%m/%d}/amsr*.nc] ./{d:%Y/%m}/{F:}.hdf'")
+    example_txt.append("Will apply the nc2hdf tool on all amsr*.nc files, and writing a .nc.hdf for each of them, in another location.")
     epilog = "examples:"
     for ex in range(len(example_cmd)):
         epilog += "\n\t{}\n\t\t{}".format(example_cmd[ex],example_txt[ex])
@@ -222,7 +245,7 @@ if __name__ == '__main__':
     p.add_argument("FROM_DATE",help="Earliest date in the loop. " + date_fmts_msg,type=date_arg)
     p.add_argument("TO_DATE", help="Latest date in the loop. " + date_fmts_msg,type=date_arg)
     p.add_argument("command", nargs=argparse.REMAINDER,
-                   help="Command to run in the loop. Must contain a {d:strftime} construct. May also contain paths with wildcards, in which case shell parameter expansion will be attempted for each date in the loop. May also contain constructs using {f:} (e.g. {f:}.nc) which will be replaced by the last filename (include path and extension) obtained through shell parameter expansion.  See examples and notes below.")
+                   help="Command to run in the loop. Must contain a {d:strftime} construct. May also contain paths with wildcards, in which case shell parameter expansion will be attempted for each date in the loop. These wildcard constructs must be enclosed in [ ]. May in addition contain constructs using {f:} or {F:} (e.g. <outir>/{F:}.nc) which will be substituted with the filenames (including extension) obtained through shell parameter expansion. {f:} will be substituted by the full filenames including path, while {F:} will be substituted by just the basename.")
     args = p.parse_args()
 
     if args.backwards:
@@ -241,19 +264,25 @@ if __name__ == '__main__':
 
     # Check the validity of the CMD: 1) does it require a d= date.
     try:
-        CMD.format(d=None)
+        CMD.format(d=None,f='{f:}',F='{F:}')
     except ValueError:
-        pass # this is ok: we want the CMD to fail if an invalid datet is provided
+        pass # this is ok: we want the CMD to fail if an invalid date is provided
     except Exception as ex:
-        sys.exit("Got exception when using CMD: {}".format(ex))
-    else:
         sys.exit("It does not seem CMD uses {d:strftime-format}. Tell me how to loop through dates.")
 
     # Check the validity of the CMD: 2) can we format it with d=today
     try:
-        CMD.format(d=datetime.date.today(),f='{f:}')
+        CMD.format(d=datetime.date.today(),f='{f:}',F='{F:}')
     except ValueError:
         sys.exit("Got exception when using CMD with d=today: {}".format(ex))
+
+    # Check the validity of the CMD: 3) if it has {f:} or {F:} it must have [shell-parameter-expansion]
+    try:
+        shell_expansion_index = has_shell_parameter_expansion(CMD)
+    except ValueError as ex:
+        sys.exit("The command has shell expansion construct, but it is wrongly formatted ({})".format(ex,))
+    if (('{f:}' in CMD) or ('{F:}' in CMD)) and (shell_expansion_index == -1):
+        sys.exit("You cannot have {f:} or {F:} without a shell parameter expansion construct in []")
 
     # handle the --backwards date looping
     first_date = args.FROM_DATE
@@ -264,28 +293,52 @@ if __name__ == '__main__':
         last_date  = args.FROM_DATE
         sign = -1
 
+    # Keep track if all commands went fine. If not we want to return non-zero code.
+    # This includes the cases where shell expansion constructs do not find files/paths
+    all_cmds_ok = True
+
     # Prepare the list of all commands. This include looping on the dates, and
     #    perform shell parameter expansion (glob)
     cmds = []
     for loop_date in rrule.rrule(args.every[1], interval=args.every[0], dtstart=first_date, until=last_date):
         try:
             # perform date looping:
-            loop_cmd = CMD.format(d=loop_date,f='{f:}')
+            loop_cmd = CMD.format(d=loop_date,f='{f:}',F='{F:}')
             # perform shell parameter expansion
-            loop_cmd, shell_expansion_index = do_shell_parameter_expansion(loop_cmd)
-            # perform filename replacement ({f:},...)
-            if '{f:}' in loop_cmd[0]:
-                if len(shell_expansion_index) == 0:
-                    raise ValueError("Sorry: you ask for {f:} but there is no shell parameter expansion here!")
-                for icmd,lcmd in enumerate(loop_cmd):
-                    split_cmd = lcmd.split(' ')
-                    expansion_filename = split_cmd[shell_expansion_index[-1]]
-                    lcmd = lcmd.format(f=expansion_filename)
-                    loop_cmd[icmd] = lcmd
-            cmds.extend(loop_cmd)
+            shell_expansion_index = has_shell_parameter_expansion(loop_cmd)
+            if shell_expansion_index == -1:
+                # this means the cmd had no [shell-parameter-expansion] constructs: nothing to do.
+                loop_cmd = [loop_cmd,]
+                cmds.extend(loop_cmd)
+            else:
+                loop_cmd, expansion_ok = do_shell_parameter_expansion(loop_cmd)
+                if (not expansion_ok):
+                    # this means the cmd had [shell-parameter-expansion], but that it did not glob to a path
+                    msg = "The shell expansion [{}] did not expand to any path!".format((loop_cmd[0].split())[shell_expansion_index])
+                    if args.die_on_error:
+                        print "ERROR! {}".format(msg,)
+                    else:
+                        print "WARNING! {}".format(msg,)
+                    all_cmds_ok = False
+                else:
+                    # ok with the parameter expansion...
+                    # perform filename substitution ({f:},...)
+                    if ('{f:}' in loop_cmd[0]) or ('{F:}' in loop_cmd[0]):
+                        for icmd,lcmd in enumerate(loop_cmd):
+                            split_cmd = lcmd.split()
+                            expansion_filename = split_cmd[shell_expansion_index]
+                            lcmd = lcmd.format(f=expansion_filename,F=os.path.basename(expansion_filename))
+                            loop_cmd[icmd] = lcmd
+                    cmds.extend(loop_cmd)
         except Exception as ex:
             msg = "Got exception with preparing cmd for {}: {}".format(loop_date,ex)
             sys.exit("ERROR {}".format(msg))
+
+    if not all_cmds_ok and args.die_on_error:
+        sys.exit("Some commands could not be prepared, stop now!")
+
+    if len(cmds) == 0:
+        sys.exit("No command could be prepared, nothing to run!")
 
     dry_run_msg = ''
     if args.dry_run:
@@ -294,7 +347,6 @@ if __name__ == '__main__':
         dry_run_msg += "*"*60 + "\n"
         print dry_run_msg
 
-    # Keep track if all runs went fine. If not we want to return non-zero code
     all_runs_ok = True
 
     # Create a "partial" command when many keyword arguments are common to all runs.
@@ -351,7 +403,7 @@ if __name__ == '__main__':
         print "Done"
         print dry_run_msg
 
-    if all_runs_ok:
+    if all_runs_ok and all_cmds_ok:
         sys.exit(0)
     else:
         sys.exit("Something went wrong!")
