@@ -1,3 +1,8 @@
+loop-wrapper (3.0.1-1) precise; urgency=low
+
+  * bugfix for minor issue (https://github.com/metno/loop_wrapper/issues/4).
+
+ -- Thomas Lavergne <thomas.lavergne@met.no>  Sat, 30 May 2015 22:25:36 +0200
 loop-wrapper (3.0.0-1) precise; urgency=low
 
   * API change: the shell wildcard constructs must now be in [].
