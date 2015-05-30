@@ -40,6 +40,7 @@
 # Thomas Lavergne, met.no/FoU, 26.05.2015    :   Clean-up in the error handling (return code, --die-on-error, etc...)
 # Thomas Lavergne, met.no/FoU, 28.05.2015    :   Introduce {F:} that will be substitute by basename({f:})
 # Thomas Lavergne, met.no/FoU, 28.05.2015    :   API change: now one must enclose shell expansion constructs inside []
+# Thomas Lavergne, met.no/FoU, 30.05.2015    :   bugfix (https://github.com/metno/loop_wrapper/issues/4)
 #============================================================
 #============================================================
 
@@ -55,7 +56,7 @@ from functools import partial
 import itertools
 from dateutil import rrule
 
-__version__ = '3.0.0'
+__version__ = '3.0.1'
 __author__  = 'Thomas Lavergne'
 __license__ = 'GPLv2'
 
@@ -270,13 +271,17 @@ if __name__ == '__main__':
     except Exception as ex:
         sys.exit("It does not seem CMD uses {d:strftime-format}. Tell me how to loop through dates.")
 
-    # Check the validity of the CMD: 2) can we format it with d=today
+    # Check the validity of the CMD: 2) does it have a {d:} construct
+    if not '{d:' in CMD:
+        sys.exit("The command MUST hold a {d:strftime} construct!")
+
+    # Check the validity of the CMD: 3) can we format it with d=today
     try:
         CMD.format(d=datetime.date.today(),f='{f:}',F='{F:}')
-    except ValueError:
+    except Exception:
         sys.exit("Got exception when using CMD with d=today: {}".format(ex))
 
-    # Check the validity of the CMD: 3) if it has {f:} or {F:} it must have [shell-parameter-expansion]
+    # Check the validity of the CMD: 4) if it has {f:} or {F:} it must have [shell-parameter-expansion]
     try:
         shell_expansion_index = has_shell_parameter_expansion(CMD)
     except ValueError as ex:

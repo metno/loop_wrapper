@@ -3,7 +3,7 @@ import unittest
 
 import sys
 import os
-from subprocess import check_output, STDOUT
+from subprocess import check_output, Popen, PIPE, STDOUT
 from datetime import date
 
 exe_dir = os.path.realpath(os.path.join(os.path.dirname(__file__),'..'))
@@ -11,6 +11,13 @@ exe = os.path.join(exe_dir,'loop_wrapper')
 
 class Test_Basic(unittest.TestCase):
     """ Test the most basic functionalities """
+
+    def test_error_when_no_datestr(self):
+        """ Test an error is triggered if no {d:} construct is found |"""
+        cmd = exe + '--quiet 20040225 20040303 echo missing'
+        p = Popen(cmd,stdout=PIPE,stderr=STDOUT,shell=True)
+        out, err = p.communicate()
+        self.assertNotEqual(p.returncode,0,msg='This run should have failed!')
 
     def test_echo_doer(self):
         """ Test basic date looping with 1-day step """
