@@ -22,17 +22,17 @@ What you need to do when you create a new version:
 a) update debian/changelog file
 manually, or use 'dch' from loop_wrapper_deb directory
 
-b) do a 'git export' in /tmp
-   rm -rf /tmp/loop_wrapper/
-   mkdir /tmp/loop_wrapper/
+b) do a 'git export' in /tmp, and remove the tests
+   rm -rf /tmp/loop_wrapper/; mkdir /tmp/loop_wrapper/
    git archive master | tar -x -C /tmp/loop_wrapper/
-   cd /tmp
+   cd /tmp/loop_wrapper; rm -rf test
+   cd ..
 
 The remaining of the commands are wrt to /tmp/loop_wrapper/
 
 c) create a tar file including version, excluding debian (so that others
 are able to rebuild your package), e.g.
-   tar cvfz loop-wrapper_1.3.2.orig.tar.gz loop_wrapper --exclude debian --execlude test
+   v=`loop_wrapper -v 2>&1 | cut -f 2 -d ' '` tar cvfz loop-wrapper_${v}.orig.tar.gz loop_wrapper --exclude debian
 
 d) run debuild in loop_wrapper, creating all the package-files
    cd loop_wrapper
@@ -40,7 +40,7 @@ d) run debuild in loop_wrapper, creating all the package-files
 
 e) upload to our repo
    cd ..
-   dupload --to precise loop-wrapper_1.3.2-1_amd64.changes
+   v=`loop_wrapper -v 2>&1 | cut -f 2 -d ' '` dupload --to precise loop-wrapper_${v}-1_amd64.changes
 see https://dokit.met.no/sysdok/linux/server/utviklingsspeil_reprepro
 
 
