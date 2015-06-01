@@ -1,8 +1,3 @@
-loop-wrapper (3.0.1-2) precise trusty; urgency=low
-
-  * Attempt to port to trusty.
-
- -- Thomas Lavergne <thomas.lavergne@met.no>  Mon, 01 Jun 2015 13:12:55 +0200
 loop-wrapper (3.0.1-1) precise; urgency=low
 
   * bugfix for minor issue (https://github.com/metno/loop_wrapper/issues/4).
