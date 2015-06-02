@@ -1,3 +1,9 @@
+loop-wrapper (3.0.1-2) unstable; urgency=low
+
+  * new attempt to use 1 debian/ directory for serving the two local repos at
+    MET Norway (precise and trusty)
+
+ -- Thomas Lavergne <thomas.lavergne@met.no>  Tue, 02 Jun 2015 09:37:49 +0200
 loop-wrapper (3.0.1-1) precise; urgency=low
 
   * bugfix for minor issue (https://github.com/metno/loop_wrapper/issues/4).
