@@ -90,3 +90,11 @@ class Test_DateParse(unittest.TestCase):
         print len(lines), lines
         self.assertEqual(len(lines),74,'Parsing YYYY date failed!')
 
+    def test_parse_TODAY_and_YESTERDAY(self):
+        """ Test date parsing of date entered as TODAY and YESTERDAY """
+        cmd = [exe,'--quiet','YESTERDAY','TODAY','echo','{d:%Y%m%d}']
+        out = check_output(cmd)
+        lines = out.splitlines()
+        print len(lines), lines
+        self.assertEqual(len(lines),2,'Parsing TODAY and YESTERDAY date failed!')
+

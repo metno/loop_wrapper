@@ -41,6 +41,7 @@
 # Thomas Lavergne, met.no/FoU, 28.05.2015    :   Introduce {F:} that will be substitute by basename({f:})
 # Thomas Lavergne, met.no/FoU, 28.05.2015    :   API change: now one must enclose shell expansion constructs inside []
 # Thomas Lavergne, met.no/FoU, 30.05.2015    :   bugfix (https://github.com/metno/loop_wrapper/issues/4)
+# Thomas Lavergne, met.no/FoU, 17.12.2015    :   allow TODAY and YESTERDAY as valid dates (https://github.com/metno/loop_wrapper/issues/6)
 #============================================================
 #============================================================
 
@@ -56,13 +57,13 @@ from functools import partial
 import itertools
 from dateutil import rrule
 
-__version__ = '3.0.1'
+__version__ = '3.0.2'
 __author__  = 'Thomas Lavergne'
 __license__ = 'GPLv2'
 
-date_fmts = ('%Y','%Y%m','%Y%m%d','%Y%m%d%H','%Y%m%d%H%M','%Y%m%d%H%M%S',)
+date_fmts = ('%Y','%Y%m','%Y%m%d','%Y%m%d%H','%Y%m%d%H%M','%Y%m%d%H%M%S')
 date_fmts_rep = {'Y':4,'m':2,'d':2,'H':2,'M':2,'S':2}
-date_fmts_msg = 'Supported formats: ' + ','.join([fmt.replace('%','%%') for fmt in date_fmts])
+date_fmts_msg = 'Supported formats: TODAY, YESTERDAY, ' + ', '.join([fmt.replace('%','%%') for fmt in date_fmts])
 
 def date_str_len(fmt):
     """ Transforms %Y%m into YYYYMM """
@@ -79,6 +80,11 @@ def date_str_len(fmt):
 
 def date_arg(d):
     """ Decode/parse the START/STOP dates """
+
+    if d == 'TODAY':
+        return datetime.datetime.today()
+    if d == 'YESTERDAY':
+        return datetime.datetime.today() - datetime.timedelta(days=1)
 
     # basic test
     if (len(d) % 2) != 0:
@@ -244,7 +250,7 @@ if __name__ == '__main__':
                    version="loop_wrapper {}".format(__version__,))
     p.add_argument("-n","--dry-run", help="If set, commands will be printed be NOT executed",action='store_true')
     p.add_argument("FROM_DATE",help="Earliest date in the loop. " + date_fmts_msg,type=date_arg)
-    p.add_argument("TO_DATE", help="Latest date in the loop. " + date_fmts_msg,type=date_arg)
+    p.add_argument("TO_DATE", help="Latest date in the loop. Same formats as FROM_DATE.",type=date_arg)
     p.add_argument("command", nargs=argparse.REMAINDER,
                    help="Command to run in the loop. Must contain a {d:strftime} construct. May also contain paths with wildcards, in which case shell parameter expansion will be attempted for each date in the loop. These wildcard constructs must be enclosed in [ ]. May in addition contain constructs using {f:} or {F:} (e.g. <outir>/{F:}.nc) which will be substituted with the filenames (including extension) obtained through shell parameter expansion. {f:} will be substituted by the full filenames including path, while {F:} will be substituted by just the basename.")
     args = p.parse_args()
