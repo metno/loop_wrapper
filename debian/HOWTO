@@ -44,6 +44,12 @@ f) upload to our repo
    cd ..
    v=`loop_wrapper/loop_wrapper -v 2>&1 | cut -f 2 -d ' '`; dupload --to precise loop-wrapper_${v}-1_amd64.changes
 
+g) install new version from apt-get (wait a while... every 15mn?)
+   sudo apt-get update
+   apt-cache policy loop-wrapper
+   sudo apt-get upgrade loop-wrapper
+
+
 see https://dokit.met.no/sysdok/linux/server/utviklingsspeil_reprepro
 
 Package needs to be loop-wrapper, since debian doesn't allow _ in
