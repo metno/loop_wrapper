@@ -1,3 +1,9 @@
+loop-wrapper (3.1.0-1) precise; urgency=low
+
+  * Add --email-when-done (will send an email once all processing is finished)
+    (https://github.com/metno/loop_wrapper/issues/5).
+
+ -- Thomas Lavergne <thomas.lavergne@met.no>  Thu, 17 Dec 2015 15:22:14 +0100
 loop-wrapper (3.0.2-1) precise; urgency=low
 
   * Allow TODAY and YESTERDAY as valid time stamps
