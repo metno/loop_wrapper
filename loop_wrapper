@@ -42,6 +42,7 @@
 # Thomas Lavergne, met.no/FoU, 28.05.2015    :   API change: now one must enclose shell expansion constructs inside []
 # Thomas Lavergne, met.no/FoU, 30.05.2015    :   bugfix (https://github.com/metno/loop_wrapper/issues/4)
 # Thomas Lavergne, met.no/FoU, 17.12.2015    :   allow TODAY and YESTERDAY as valid dates (https://github.com/metno/loop_wrapper/issues/6)
+# Thomas Lavergne, met.no/FoU, 17.12.2015    :   send email when done
 #============================================================
 #============================================================
 
@@ -57,13 +58,32 @@ from functools import partial
 import itertools
 from dateutil import rrule
 
-__version__ = '3.0.2'
+__version__ = '3.1.0'
 __author__  = 'Thomas Lavergne'
 __license__ = 'GPLv2'
 
 date_fmts = ('%Y','%Y%m','%Y%m%d','%Y%m%d%H','%Y%m%d%H%M','%Y%m%d%H%M%S')
 date_fmts_rep = {'Y':4,'m':2,'d':2,'H':2,'M':2,'S':2}
 date_fmts_msg = 'Supported formats: TODAY, YESTERDAY, ' + ', '.join([fmt.replace('%','%%') for fmt in date_fmts])
+
+def send_email(to,full_cmdline,cmd,start,stop):
+    """ send a simple email to state that we are done """
+    import smtplib
+    import platform
+    from email.mime.text import MIMEText
+
+    me = 'loop_wrapper@nohost.com'
+    body = full_cmdline
+    body += '\nBegan: {}'.format(start,)
+    body += '\nEnded: {}'.format(stop,)
+    body += '\nDuration: {}'.format((stop-start),)
+    msg = MIMEText(body)
+    msg['Subject'] = '[{}] done with {}'.format(platform.node(),cmd,)
+    msg['From'] = me
+    msg['To'] = to
+    s = smtplib.SMTP('localhost')
+    s.sendmail(me, [to,], msg.as_string())
+    s.quit()
 
 def date_str_len(fmt):
     """ Transforms %Y%m into YYYYMM """
@@ -215,6 +235,9 @@ if __name__ == '__main__':
     """
        loop_wrapper will run the command given as parameter on a range of dates.
     """
+    
+    # default email-adress to send email when done
+    email_to = os.environ['USER']+'@met.no'
 
     # Prepare command-line parameters and help text
     example_cmd = []
@@ -240,6 +263,7 @@ if __name__ == '__main__':
     epilog += "\nquestions, bug reports, and feature requests:\n"
     epilog += "\tthomas.lavergne@met.no\n"
     p = argparse.ArgumentParser("loop_wrapper",epilog=epilog,formatter_class=RawDescriptionHelpFormatter)
+    p.add_argument("--email-when-done", help="Send me ({}) an email when done".format(email_to),action='store_true',default=False)
     p.add_argument("--die-on-error", help="Stop looping as soon as one date fails",action='store_true',default=False)
     p.add_argument("--every", help="Loop every n units. Default unit is d:days, but H:hourly, m:monthly, Y:yearly are supported. For example '--every 6H' (6-hourly steps) or '--every 3m' (steps of 3 months)",default=(1,rrule.DAILY),type=every_arg)
     p.add_argument("--backwards", help="Start from TO_DATE and step backwards to FROM_DATE",action='store_true')
@@ -254,6 +278,7 @@ if __name__ == '__main__':
     p.add_argument("command", nargs=argparse.REMAINDER,
                    help="Command to run in the loop. Must contain a {d:strftime} construct. May also contain paths with wildcards, in which case shell parameter expansion will be attempted for each date in the loop. These wildcard constructs must be enclosed in [ ]. May in addition contain constructs using {f:} or {F:} (e.g. <outir>/{F:}.nc) which will be substituted with the filenames (including extension) obtained through shell parameter expansion. {f:} will be substituted by the full filenames including path, while {F:} will be substituted by just the basename.")
     args = p.parse_args()
+
 
     if args.backwards:
         sys.exit("Sorry, --backwards was turned off for now")
@@ -357,6 +382,8 @@ if __name__ == '__main__':
         dry_run_msg += "\tDRY-RUN MODE! Commands are printed to screen but NOT run\n"
         dry_run_msg += "*"*60 + "\n"
         print dry_run_msg
+        if args.email_when_done:
+            print "Will NOT send you an email (--dry-run)"
 
     all_runs_ok = True
 
@@ -365,6 +392,8 @@ if __name__ == '__main__':
     #    master job will capture it (see below)).
     partial_run_shell = partial(run_shell, quiet=args.quiet, dry_run=args.dry_run, 
                                 ignore_CtrlC=(args.cpu!=1),die_on_error=args.die_on_error)
+
+    begin_of_run = datetime.datetime.now()
     if args.cpu == 1:
         if not args.quiet:
             print "Serial run {} from {} to {}".format(CMD,args.FROM_DATE,args.TO_DATE)
@@ -413,6 +442,11 @@ if __name__ == '__main__':
     if not args.quiet:
         print "Done"
         print dry_run_msg
+
+    end_of_run = datetime.datetime.now()
+
+    if args.email_when_done and not args.dry_run:
+        send_email(email_to,' '.join(sys.argv,),CMD,begin_of_run,end_of_run)
 
     if all_runs_ok and all_cmds_ok:
         sys.exit(0)
