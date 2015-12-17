@@ -1,3 +1,9 @@
+loop-wrapper (3.0.2-1) precise; urgency=low
+
+  * Allow TODAY and YESTERDAY as valid time stamps
+    (https://github.com/metno/loop_wrapper/issues/6).
+
+ -- Thomas Lavergne <thomas.lavergne@met.no>  Thu, 17 Dec 2015 13:58:37 +0100
 loop-wrapper (3.0.1-2) unstable; urgency=low
 
   * new attempt to use 1 debian/ directory for serving the two local repos at
