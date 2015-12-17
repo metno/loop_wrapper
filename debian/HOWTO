@@ -22,7 +22,9 @@ What you need to do when you create a new version:
 a) update debian/changelog file
    the date is obtained by :r!date -R
 
-b) do a 'git export' in /tmp, and remove the tests
+b) commit and push!
+
+c) do a 'git export' in /tmp, and remove the tests
    rm -rf /tmp/loop_wrapper/; mkdir /tmp/loop_wrapper/
    git archive master | tar -x -C /tmp/loop_wrapper/
    rm -rf /tmp/loop_wrapper/test
@@ -30,16 +32,16 @@ b) do a 'git export' in /tmp, and remove the tests
 
 The remaining of the commands are wrt to /tmp/loop_wrapper/
 
-c) create a tar file including version, excluding debian (so that others
+d) create a tar file including version, excluding debian (so that others
 are able to rebuild your package), e.g.
    cd /tmp
    v=`loop_wrapper/loop_wrapper -v 2>&1 | cut -f 2 -d ' '`; tar cvfz loop-wrapper_${v}.orig.tar.gz loop_wrapper --exclude debian
 
-d) run debuild in loop_wrapper, creating all the package-files
+e) run debuild in loop_wrapper, creating all the package-files
    cd ./loop_wrapper
    debuild -us -uc
 
-e) upload to our repo
+f) upload to our repo
    cd /tmp
    v=`loop_wrapper/loop_wrapper -v 2>&1 | cut -f 2 -d ' '` dupload --to precise loop-wrapper_${v}-1_amd64.changes
 
