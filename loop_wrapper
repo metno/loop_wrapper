@@ -66,7 +66,7 @@ date_fmts = ('%Y','%Y%m','%Y%m%d','%Y%m%d%H','%Y%m%d%H%M','%Y%m%d%H%M%S')
 date_fmts_rep = {'Y':4,'m':2,'d':2,'H':2,'M':2,'S':2}
 date_fmts_msg = 'Supported formats: TODAY, YESTERDAY, ' + ', '.join([fmt.replace('%','%%') for fmt in date_fmts])
 
-def send_email(to,full_cmdline,cmd,start,stop):
+def send_email(to,cwd,full_cmdline,cmd,start,stop):
     """ send a simple email to state that we are done """
     import smtplib
     import platform
@@ -74,6 +74,7 @@ def send_email(to,full_cmdline,cmd,start,stop):
 
     me = 'loop_wrapper@nohost.com'
     body = full_cmdline
+    body += '\nRun from: {}'.format(cwd,)
     body += '\nBegan: {}'.format(start,)
     body += '\nEnded: {}'.format(stop,)
     body += '\nDuration: {}'.format((stop-start),)
@@ -446,7 +447,7 @@ if __name__ == '__main__':
     end_of_run = datetime.datetime.now()
 
     if args.email_when_done and not args.dry_run:
-        send_email(email_to,' '.join(sys.argv,),CMD,begin_of_run,end_of_run)
+        send_email(email_to,os.path.abspath(''),' '.join(sys.argv,),CMD,begin_of_run,end_of_run)
 
     if all_runs_ok and all_cmds_ok:
         sys.exit(0)
