@@ -13,7 +13,7 @@ class Test_Basic(unittest.TestCase):
     """ Test the most basic functionalities """
 
     def test_error_when_no_datestr(self):
-        """ Test an error is triggered if no {d:} construct is found |"""
+        """ Test an error is triggered if no {d:} construct is found """
         cmd = exe + '--quiet 20040225 20040303 echo missing'
         p = Popen(cmd,stdout=PIPE,stderr=STDOUT,shell=True)
         out, err = p.communicate()
