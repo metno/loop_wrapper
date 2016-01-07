@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #============================================================
 #    loop_wrapper
-#    Copyright (C) 2014  Thomas Lavergne
+#    Copyright (C) 2014,2015,2016  Thomas Lavergne
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -31,7 +31,8 @@
 # Thomas Lavergne, met.no/FoU, 13.04.2015    :   add basic filename expantion with {f:}
 # Thomas Lavergne, met.no/FoU, 17.04.2015    :   bugfix
 # Thomas Lavergne, met.no/FoU, 18.05.2015    :   fix typo in doc
-# Thomas Lavergne, met.no/FoU, 18.05.2015    :   Ctrl-C will now interupt PLL loops nicely (kudos to http://bryceboe.com/2010/08/26/python-multiprocessing-and-keyboardinterrupt/)
+# Thomas Lavergne, met.no/FoU, 18.05.2015    :   Ctrl-C will now interupt PLL loops nicely (kudos to 
+#                    http://bryceboe.com/2010/08/26/python-multiprocessing-and-keyboardinterrupt/)
 # Thomas Lavergne, met.no/FoU, 18.05.2015    :   Add my contact in the help message
 # Thomas Lavergne, met.no/FoU, 18.05.2015    :   Add an MIT license header
 # Thomas Lavergne, met.no/FoU, 20.05.2015    :   Re-licensing to GPLv2
