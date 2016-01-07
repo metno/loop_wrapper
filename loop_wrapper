@@ -238,7 +238,12 @@ if __name__ == '__main__':
     """
     
     # default email-adress to send email when done
-    email_to = os.environ['USER']+'@met.no'
+    email_to = None
+    try:
+        email_to = os.environ['USER']+'@met.no'
+    except KeyError:
+        # can happen in case loop_wrapper is run in crontab
+        pass
 
     # Prepare command-line parameters and help text
     example_cmd = []
@@ -286,6 +291,10 @@ if __name__ == '__main__':
     
     if len(args.command) == 0:
         sys.exit("Sorry, I did not get what the command was?")
+
+    if args.email_when_done and not args.dry_run and not email_to:
+        # asking for an email, but no mail address available
+        sys.exit("Sorry, we could not guess an e-mail address for you (USER not set in ENV)")
 
     CMD = ' '.join(args.command)
     if not args.quiet:
