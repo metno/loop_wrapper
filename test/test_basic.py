@@ -9,6 +9,8 @@ from datetime import date
 exe_dir = os.path.realpath(os.path.join(os.path.dirname(__file__),'..'))
 exe = os.path.join(exe_dir,'loop_wrapper')
 
+env_cmd = '/usr/bin/env'
+
 class Test_Basic(unittest.TestCase):
     """ Test the most basic functionalities """
 
@@ -25,7 +27,7 @@ class Test_Basic(unittest.TestCase):
         out = check_output(cmd)
         lines = out.splitlines()
         self.assertEqual(len(lines),8,msg='Basic date looping failed!')
-        cmd2 = ['env','-i',]
+        cmd2 = [env_cmd,'-i',]
         cmd2.extend(cmd,)
         out = check_output(cmd2)
         lines = out.splitlines()
@@ -42,7 +44,7 @@ class Test_Basic(unittest.TestCase):
 
     def test_call_noENV(self):
         """ Test we can call the script in a 'crontab-like' environment (missing ENV) """
-        cmd = ['env','-i',exe,'-v']
+        cmd = [env_cmd,'-i',exe,'-v']
         out = check_output(cmd,stderr=STDOUT)
         self.assertEqual('loop_wrapper',out.split(' ')[0],
                          msg='Did not manage to system call to loop_wrapper')
