@@ -1,10 +1,16 @@
 language: python
-sudo : required
+#sudo : required
 python:
   - 2.7
-install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -y coreutils
-  - pip install -r requirements.txt
+#install:
+#  - sudo apt-get update -qq
+#  - sudo apt-get install -y coreutils
+#  - pip install -r requirements.txt
 script:
   - nosetests test
+addons:
+  apt:
+    packages:
+      - python-dateutil
+      - coreutils
+
