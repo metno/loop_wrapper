@@ -44,14 +44,17 @@ e) run debuild in loop_wrapper, creating all the package-files
    cd ./loop_wrapper
    debuild -us -uc
 
-f) upload to our repo
+f) upload to our repos
    cd ..
    v=`loop_wrapper/loop_wrapper -v 2>&1 | cut -f 2 -d ' '`; dupload --to precise loop-wrapper_${v}-1_amd64.changes
+   v=`loop_wrapper/loop_wrapper -v 2>&1 | cut -f 2 -d ' '`; dupload -f --to hardy loop-wrapper_${v}-1_amd64.changes
 
 g) install new version from apt-get (wait a while... every 15mn?)
    sudo apt-get update
    apt-cache policy loop-wrapper
    sudo apt-get upgrade loop-wrapper
+
+   installation on PPI requires an email to Nico.
 
 
 see https://dokit.met.no/sysdok/linux/server/utviklingsspeil_reprepro
