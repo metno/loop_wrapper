@@ -1,3 +1,8 @@
+loop-wrapper (3.1.2-1) precise; urgency=low
+
+  * Have {d:} (empty format string) as default to {d:%Y%m%d}
+
+ -- Thomas Lavergne <thomas.lavergne@met.no>  Fri, 06 May 2016 13:35:52 +0200
 loop-wrapper (3.1.1-1) precise; urgency=low
 
   * Add some information in the email triggered
