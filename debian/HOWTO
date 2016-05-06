@@ -23,7 +23,8 @@ What you need to do when you create a new version:
 
 *** RUN THE TESTSUITE on Precise and Trusty ***
 
-a) bump version number in header of loop_wrapper, update debian/changelog file
+a) BUMP version number in header of loop_wrapper,i
+   UPDATE debian/changelog file
    the date is obtained by :r!date -R
 
 b) COMMIT AND PUSH
@@ -47,7 +48,7 @@ e) run debuild in loop_wrapper, creating all the package-files
 f) upload to our repos
    cd ..
    v=`loop_wrapper/loop_wrapper -v 2>&1 | cut -f 2 -d ' '`; dupload --to precise loop-wrapper_${v}-1_amd64.changes
-   v=`loop_wrapper/loop_wrapper -v 2>&1 | cut -f 2 -d ' '`; dupload -f --to hardy loop-wrapper_${v}-1_amd64.changes
+   v=`loop_wrapper/loop_wrapper -v 2>&1 | cut -f 2 -d ' '`; dupload -f --to trusty loop-wrapper_${v}-1_amd64.changes
 
 g) install new version from apt-get (wait a while... every 15mn?)
    sudo apt-get update
