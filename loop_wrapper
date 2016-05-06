@@ -70,17 +70,19 @@ date_fmts_msg = 'Supported formats: TODAY, YESTERDAY, ' + ', '.join([fmt.replace
 def send_email(to,cwd,full_cmdline,cmd,start,stop):
     """ send a simple email to state that we are done """
     import smtplib
-    import platform
+    import socket
     from email.mime.text import MIMEText
+    hostname = socket.gethostname()
 
     me = 'loop_wrapper@nohost.com'
     body = full_cmdline
-    body += '\nRun from: {}'.format(cwd,)
+    body += '\nFrom: {}'.format(cwd,)
+    body += '\nHost: {}'.format(hostname,)
     body += '\nBegan: {}'.format(start,)
     body += '\nEnded: {}'.format(stop,)
     body += '\nDuration: {}'.format((stop-start),)
     msg = MIMEText(body)
-    msg['Subject'] = '[{}] done with {}'.format(platform.node(),cmd,)
+    msg['Subject'] = '[{}] done with {}'.format(hostname,cmd,)
     msg['From'] = me
     msg['To'] = to
     s = smtplib.SMTP('localhost')
