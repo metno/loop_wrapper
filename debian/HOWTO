@@ -23,10 +23,10 @@ What you need to do when you create a new version:
 
 *** RUN THE TESTSUITE on Precise and Trusty ***
 
-a) update debian/changelog file
+a) bump version number in header of loop_wrapper, update debian/changelog file
    the date is obtained by :r!date -R
 
-b) commit and push!
+b) COMMIT AND PUSH
 
 c) do a 'git export' in /tmp, and remove the tests
    rm -rf /tmp/loop_wrapper/; mkdir /tmp/loop_wrapper/
