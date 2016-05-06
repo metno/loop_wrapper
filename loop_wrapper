@@ -285,9 +285,8 @@ if __name__ == '__main__':
     p.add_argument("FROM_DATE",help="Earliest date in the loop. " + date_fmts_msg,type=date_arg)
     p.add_argument("TO_DATE", help="Latest date in the loop. Same formats as FROM_DATE.",type=date_arg)
     p.add_argument("command", nargs=argparse.REMAINDER,
-                   help="Command to run in the loop. Must contain a {d:strftime} construct. May also contain paths with wildcards, in which case shell parameter expansion will be attempted for each date in the loop. These wildcard constructs must be enclosed in [ ]. May in addition contain constructs using {f:} or {F:} (e.g. <outir>/{F:}.nc) which will be substituted with the filenames (including extension) obtained through shell parameter expansion. {f:} will be substituted by the full filenames including path, while {F:} will be substituted by just the basename.")
+                   help="Command to run in the loop. Must contain a {d:strftime} construct (e.g. {d:%%Y.%%m.%%d}). Note that {d:} defaults to {d:%%Y%%m%%d}. The command may also contain paths with wildcards, in which case shell parameter expansion will be attempted for each date in the loop. These wildcard constructs must be enclosed in [ ]. May in addition contain constructs using {f:} or {F:} (e.g. <outir>/{F:}.nc) which will be substituted with the filenames (including extension) obtained through shell parameter expansion. {f:} will be substituted by the full filenames including path, while {F:} will be substituted by just the basename.")
     args = p.parse_args()
-
 
     if args.backwards:
         sys.exit("Sorry, --backwards was turned off for now")
@@ -302,6 +301,9 @@ if __name__ == '__main__':
     CMD = ' '.join(args.command)
     if not args.quiet:
         print "CMD is {}".format(CMD,)
+
+    # Special case if {d:} is used (empty dateformat string):
+    CMD = CMD.replace('{d:}','{d:%Y%m%d}')
 
     # Check the validity of the range
     if args.FROM_DATE > args.TO_DATE:

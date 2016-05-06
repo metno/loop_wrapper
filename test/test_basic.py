@@ -21,6 +21,16 @@ class Test_Basic(unittest.TestCase):
         out, err = p.communicate()
         self.assertNotEqual(p.returncode,0,msg='This run should have failed!')
 
+    def test_format_with_empty_datestr(self):
+        """ Test use of {d:} (empty datestr format) is valid, and defaults to %Y%m%d """
+        cmd = [exe,'--quiet','20040225','20040303','echo','{d:}']
+        out = check_output(cmd)
+        lines = out.splitlines()
+        lengths = [len(d) for d in lines]
+        print lines, lengths
+        self.assertEqual(set(lengths),set([8,]),
+                         msg='Date looping with {{d:}} shortcut failed (got {} instead of YYYYMMDD)!'.format(lines[0]))
+
     def test_echo_doer(self):
         """ Test basic date looping with 1-day step (with and without ENV) """
         cmd = [exe,'--quiet','20040225','20040303','echo','{d:%Y%m%d}']
