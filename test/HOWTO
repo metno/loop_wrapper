@@ -1,0 +1,5 @@
+To test the local/dev version of loop_wrapper (./loop_wrapper):
+>> nosetest test/
+
+To test the version installed in /usr/bin:
+>> LW_TEST_SYSTEM=1 nosetests test/
