@@ -6,7 +6,10 @@ import os
 from subprocess import check_output, Popen, PIPE, STDOUT
 from datetime import date
 
-exe_dir = os.path.realpath(os.path.join(os.path.dirname(__file__),'..'))
+if os.getenv('LW_TEST_SYSTEM'):
+    exe_dir = '/usr/bin'
+else:
+    exe_dir = os.path.realpath(os.path.join(os.path.dirname(__file__),'..'))
 exe = os.path.join(exe_dir,'loop_wrapper')
 
 env_cmd = '/usr/bin/env'
