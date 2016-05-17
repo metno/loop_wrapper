@@ -59,7 +59,7 @@ from functools import partial
 import itertools
 from dateutil import rrule
 
-__version__ = '3.1.2'
+__version__ = 'dev'
 __author__  = 'Thomas Lavergne'
 __license__ = 'GPLv2'
 
@@ -172,6 +172,17 @@ def cpu_arg(d):
         raise argparse.ArgumentTypeError("Value cannot be zero")
     return d
 
+def secondary_loop_arg(d):
+    """ Decode the argument to --secondary-loop flag """
+    try:
+        loop_key, loop_spec = d.split('=')
+        if len(loop_key) > 1:
+            raise argparse.ArgumentTypeError("The loop key can have only 1 letter")
+        loop_vals = loop_spec.split(',')
+    except:
+        raise argparse.ArgumentTypeError("Not a valid loop description (should be --secondary-loop <key>=<1st>,<2nd>,...)")
+    return loop_key, loop_vals
+
 def run_shell(cmd,quiet=True,dry_run=False,ignore_CtrlC=False,die_on_error=True):
     err = 0
     if not quiet:
@@ -282,6 +293,7 @@ if __name__ == '__main__':
                    help="print version number and exits",action='version',
                    version="loop_wrapper {}".format(__version__,))
     p.add_argument("-n","--dry-run", help="If set, commands will be printed be NOT executed",action='store_true')
+    p.add_argument("--secondary-loop","--loop", help="defines a secondary loop with format <key>=<1st>,<2nd>,...",type=secondary_loop_arg)
     p.add_argument("FROM_DATE",help="Earliest date in the loop. " + date_fmts_msg,type=date_arg)
     p.add_argument("TO_DATE", help="Latest date in the loop. Same formats as FROM_DATE.",type=date_arg)
     p.add_argument("command", nargs=argparse.REMAINDER,
@@ -309,9 +321,14 @@ if __name__ == '__main__':
     if args.FROM_DATE > args.TO_DATE:
         sys.exit("FROM_DATE should come *before* TO_DATE (even if --backwards is used).")
 
+    # Check with the secondary loop
+    secondary_loop_dict = {}
+    if args.secondary_loop:
+        secondary_loop_dict[args.secondary_loop[0]]=None
+
     # Check the validity of the CMD: 1) does it require a d= date.
     try:
-        CMD.format(d=None,f='{f:}',F='{F:}')
+        CMD.format(d=None,f='{f:}',F='{F:}',**secondary_loop_dict)
     except ValueError:
         pass # this is ok: we want the CMD to fail if an invalid date is provided
     except Exception as ex:
@@ -323,7 +340,7 @@ if __name__ == '__main__':
 
     # Check the validity of the CMD: 3) can we format it with d=today
     try:
-        CMD.format(d=datetime.date.today(),f='{f:}',F='{F:}')
+        CMD.format(d=datetime.date.today(),f='{f:}',F='{F:}',**secondary_loop_dict)
     except Exception:
         sys.exit("Got exception when using CMD with d=today: {}".format(ex))
 
@@ -382,7 +399,7 @@ if __name__ == '__main__':
                             loop_cmd[icmd] = lcmd
                     cmds.extend(loop_cmd)
         except Exception as ex:
-            msg = "Got exception with preparing cmd for {}: {}".format(loop_date,ex)
+            msg = "Got exception with preparing cmd for {} ({})".format(loop_date.date(),ex)
             sys.exit("ERROR {}".format(msg))
 
     if not all_cmds_ok and args.die_on_error:
