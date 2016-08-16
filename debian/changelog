@@ -1,3 +1,8 @@
+loop-wrapper (3.1.3-1) precise; urgency=low
+
+  * Fix to avoid timeout after 18h15s on long PLL jobs
+
+ -- Thomas Lavergne <thomas.lavergne@met.no>  Tue, 16 Aug 2016 11:34:25 +0200
 loop-wrapper (3.1.2-1) precise; urgency=low
 
   * Have {d:} (empty format string) as default to {d:%Y%m%d}
