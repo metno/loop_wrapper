@@ -44,6 +44,7 @@
 # Thomas Lavergne, met.no/FoU, 30.05.2015    :   bugfix (https://github.com/metno/loop_wrapper/issues/4)
 # Thomas Lavergne, met.no/FoU, 17.12.2015    :   allow TODAY and YESTERDAY as valid dates (https://github.com/metno/loop_wrapper/issues/6)
 # Thomas Lavergne, met.no/FoU, 17.12.2015    :   send email when done
+# Thomas Lavergne, met.no/FoU, 16.08.2016    :   fix so that heavy PLL runs will not crash due to timeout.
 #============================================================
 #============================================================
 
@@ -54,12 +55,12 @@ from argparse import RawDescriptionHelpFormatter
 import datetime
 import subprocess
 import glob
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool, cpu_count, TimeoutError
 from functools import partial
 import itertools
 from dateutil import rrule
 
-__version__ = '3.1.2'
+__version__ = '3.1.3'
 __author__  = 'Thomas Lavergne'
 __license__ = 'GPLv2'
 
@@ -440,14 +441,19 @@ if __name__ == '__main__':
         pool = Pool(psize)
         p = pool.map_async(partial_run_shell,cmds)
         try:
-            # TODO: the parameter to get() is a time-out. Check this is a big enough number.
-            results = p.get(0xFFFF)
+            timeout = None
+            results = p.get(timeout)
             all_runs_ok = not sum(results)
         except KeyboardInterrupt:
             all_runs_ok = False
             pool.terminate()
             pool.close()
             print "Received KeyboardInterrupt (Ctrl-C). Aborting master and all PLL child processes."
+        except TimeoutError:
+            all_runs_ok = False
+            pool.terminate()
+            pool.close()
+            print "Received TimeoutError from the pool (timeout is set to {}s). Aborting master and all PLL child processes.".format(timeout,)
         except Exception as ex:
             all_runs_ok = False
             print "Caught an Exception in the pool ({})".format(ex,)
