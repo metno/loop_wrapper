@@ -1,3 +1,9 @@
+loop-wrapper (3.1.4-1) xenial; urgency=low
+
+  * Fix small bug when reporting bad-formatted command line
+  * Now build for xenial as well
+
+ -- Thomas Lavergne <thomas.lavergne@met.no>  Thu, 15 Jun 2017 15:12:21 +0200
 loop-wrapper (3.1.3-1) precise; urgency=low
 
   * Fix to avoid timeout after 18h15s on long PLL jobs
