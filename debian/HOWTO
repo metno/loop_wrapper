@@ -16,6 +16,9 @@ should be the one of your script.
 The other files are boiler-plate files, I set copyright to GPL-2/ change
 if you like.
 
+Creating debian package will require:
+
+sudo apt-get install devscripts metno-devscripts
 
 What you need to do when you create a new version:
 
@@ -23,13 +26,15 @@ What you need to do when you create a new version:
 
 *** RUN THE TESTSUITE on Precise and Trusty ***
 
-a) BUMP version number in header of loop_wrapper,i
+a) BUMP version number in header of loop_wrapper,
    UPDATE debian/changelog file
    the date is obtained by :r!date -R
 
 b) COMMIT AND PUSH
 
-c) do a 'git export' in /tmp, and remove the tests
+c) do a 'git export' in /tmp, and remove the tests. This must be done
+      from the root loop_wrapper directory
+   
    rm -rf /tmp/loop_wrapper/; mkdir /tmp/loop_wrapper/
    git archive master | tar -x -C /tmp/loop_wrapper/
    rm -rf /tmp/loop_wrapper/test
@@ -38,6 +43,7 @@ The remaining of the commands are wrt to /tmp/loop_wrapper/
 
 d) create a tar file including version, excluding debian (so that others
 are able to rebuild your package), e.g.
+
    cd /tmp
    v=`loop_wrapper/loop_wrapper -v 2>&1 | cut -f 2 -d ' '`; tar cvfz loop-wrapper_${v}.orig.tar.gz loop_wrapper --exclude debian
 
@@ -49,6 +55,7 @@ f) upload to our repos
    cd ..
    v=`loop_wrapper/loop_wrapper -v 2>&1 | cut -f 2 -d ' '`; dupload --to precise loop-wrapper_${v}-1_amd64.changes
    v=`loop_wrapper/loop_wrapper -v 2>&1 | cut -f 2 -d ' '`; dupload -f --to trusty loop-wrapper_${v}-1_amd64.changes
+   v=`loop_wrapper/loop_wrapper -v 2>&1 | cut -f 2 -d ' '`; dupload -f --to xenial loop-wrapper_${v}-1_amd64.changes
 
 g) install new version from apt-get (wait a while... every 15mn?)
    sudo apt-get update
