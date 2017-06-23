@@ -15,11 +15,30 @@ class Test_Backwards(unittest.TestCase):
     """ Test the looping over a date range with --backwards """
 
     def test_backwards(self):
-        """ Test date looping with --every step with specified yearly resolution"""
-        cmd = [exe,'--quiet','--every','6Y','19800501','20130601','echo','{d:%Y%m%d}']
-        out = check_output(cmd)
-        lines = out.splitlines()
-        self.assertEqual(len(lines),6,'Date looping with "--every 6Y" failed!')
+        """ Test date looping with --backwards (and daily setps)"""
+        # run the same command both forwards and backwards and check the dates are the same
+        cmd_fwd = [exe,'--quiet','19800104','19800114','echo','{d:%Y%m%d}']
+        out_fwd = check_output(cmd_fwd)
+        lines_fwd = out_fwd.splitlines()
+        cmd_bck = cmd_fwd
+        cmd_bck.insert(1,'--backwards')
+        out_bck = check_output(cmd_bck)
+        lines_bck = out_bck.splitlines()
+        lines_bck.sort()
+        self.assertEqual(lines_fwd,lines_bck,'Date looping with "--backwards" failed!')
+
+    def test_backwards_ev(self):
+        """ Test date looping with --backwards and --every"""
+        # run the same command both forwards and backwards and check the dates are the same
+        cmd_fwd = [exe,'--quiet','--every','2m','19800104','19800714','echo','{d:%Y%m%d}']
+        out_fwd = check_output(cmd_fwd)
+        lines_fwd = out_fwd.splitlines()
+        cmd_bck = cmd_fwd
+        cmd_bck.insert(1,'--backwards')
+        out_bck = check_output(cmd_bck)
+        lines_bck = out_bck.splitlines()
+        lines_bck.sort()
+        self.assertEqual(lines_fwd,lines_bck,'Date looping with "--backwards" and "--every" failed!')
 
 class Test_Every(unittest.TestCase):
     """ Test the looping over a date range with --every """

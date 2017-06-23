@@ -46,6 +46,7 @@
 # Thomas Lavergne, met.no/FoU, 17.12.2015    :   send email when done
 # Thomas Lavergne, met.no/FoU, 16.08.2016    :   fix so that heavy PLL runs will not crash due to timeout.
 # Thomas Lavergne, met.no/FoU, 15.06.2017    :   fix minor bug when command-line lacks {d:}
+# Thomas Lavergne, met.no/FoU, 23.06.2017    :   re-allow --backwards looping for serial (aka non-PLL) runs
 #============================================================
 #============================================================
 
@@ -61,7 +62,7 @@ from functools import partial
 import itertools
 from dateutil import rrule
 
-__version__ = '3.1.4'
+__version__ = '3.2.0'
 __author__  = 'Thomas Lavergne'
 __license__ = 'GPLv2'
 
@@ -268,8 +269,8 @@ if __name__ == '__main__':
         epilog += "\n\t{}\n\t\t{}".format(example_cmd[ex],example_txt[ex])
     epilog += "\nnotes:\n"
     epilog += "\to Parallel processing (--cpu) does not generally conserve execution order.\n"
-    epilog += "\to Using --backwards with --cpu does not guarantee the execution order either.\n"
-    epilog += "\to FROM_DATE is always the earliest date, and TO_DATE the latest one, even with --backwards.\n"
+    epilog += "\to --backwards is thus de-activated with --cpu\n"
+    epilog += "\to FROM_DATE is always the earlier date, and TO_DATE the later one, even with --backwards.\n"
     epilog += "\to When using shell parameter expansion, one should place the command in single quotes ''.\n"
     epilog += "\nquestions, bug reports, and feature requests:\n"
     epilog += "\tthomas.lavergne@met.no\n"
@@ -290,8 +291,8 @@ if __name__ == '__main__':
                    help="Command to run in the loop. Must contain a {d:strftime} construct (e.g. {d:%%Y.%%m.%%d}). Note that {d:} defaults to {d:%%Y%%m%%d}. The command may also contain paths with wildcards, in which case shell parameter expansion will be attempted for each date in the loop. These wildcard constructs must be enclosed in [ ]. May in addition contain constructs using {f:} or {F:} (e.g. <outir>/{F:}.nc) which will be substituted with the filenames (including extension) obtained through shell parameter expansion. {f:} will be substituted by the full filenames including path, while {F:} will be substituted by just the basename.")
     args = p.parse_args()
 
-    if args.backwards:
-        sys.exit("Sorry, --backwards was turned off for now")
+    if args.backwards and args.cpu > 1:
+        sys.exit("--backwards can not be used in parallel runs, since the execution order is not guaranteed.")
     
     if len(args.command) == 0:
         sys.exit("Sorry, I did not get what the command was?")
@@ -342,8 +343,6 @@ if __name__ == '__main__':
     last_date  = args.TO_DATE
     sign = +1
     if args.backwards:
-        first_date = args.TO_DATE
-        last_date  = args.FROM_DATE
         sign = -1
 
     # Keep track if all commands went fine. If not we want to return non-zero code.
@@ -353,7 +352,7 @@ if __name__ == '__main__':
     # Prepare the list of all commands. This include looping on the dates, and
     #    perform shell parameter expansion (glob)
     cmds = []
-    for loop_date in rrule.rrule(args.every[1], interval=args.every[0], dtstart=first_date, until=last_date):
+    for loop_date in rrule.rrule(args.every[1], interval=args.every[0], dtstart=first_date, until=last_date)[::sign]:
         try:
             # perform date looping:
             loop_cmd = CMD.format(d=loop_date,f='{f:}',F='{F:}')

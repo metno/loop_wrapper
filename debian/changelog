@@ -1,3 +1,8 @@
+loop-wrapper (3.2.0-1) xenial; urgency=low
+
+  * Re-allow --backwards looping for serial (non-PLL) runs
+
+ -- Thomas Lavergne <thomas.lavergne@met.no>  Fri, 23 Jun 2017 22:58:24 +0200
 loop-wrapper (3.1.4-1) xenial; urgency=low
 
   * Fix small bug when reporting bad-formatted command line
