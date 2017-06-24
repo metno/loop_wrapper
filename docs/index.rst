@@ -148,8 +148,20 @@ The ``<START-DATE>`` and ``STOP-DATE`` arguments can be specified with several f
    "YYYYMMDDHHMMSS", "At HH:MM:SS"
    "YYYYMM", "On 01/MM/YYYY"
    "YYYY", "On 01/01/YYYY"
-   "TODAY", "At UTC now!"
-   "YESTERDAY", "The day before at UTC now!"
+   "TODAY", "At 00:00:00"
+   "YESTERDAY", "At 00:00:00"
+
+------------------
+Wildcard expansion
+------------------
+
+
+------------------------
+Verbosity and reporting
+------------------------
+Several options allow to control the level of verbosity and reporting from ``loop_wrapper`` runs.
+
+``--quiet`` removes all output by ``loop_wrapper`` and only the output from the processing ``<COMMAND>`` are printed.
 
 Indices and tables
 ==================
