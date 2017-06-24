@@ -47,6 +47,7 @@
 # Thomas Lavergne, met.no/FoU, 16.08.2016    :   fix so that heavy PLL runs will not crash due to timeout.
 # Thomas Lavergne, met.no/FoU, 15.06.2017    :   fix minor bug when command-line lacks {d:}
 # Thomas Lavergne, met.no/FoU, 23.06.2017    :   re-allow --backwards looping for serial (aka non-PLL) runs
+# Thomas Lavergne, met.no/FoU, 24.06.2017    :   change TODAY and YESTERDAY to be at 0 UTC (instead of utcnow)
 #============================================================
 #============================================================
 
@@ -62,7 +63,7 @@ from functools import partial
 import itertools
 from dateutil import rrule
 
-__version__ = '3.2.0'
+__version__ = '3.3.0'
 __author__  = 'Thomas Lavergne'
 __license__ = 'GPLv2'
 
@@ -108,10 +109,11 @@ def date_str_len(fmt):
 def date_arg(d):
     """ Decode/parse the START/STOP dates """
 
-    if d == 'TODAY':
-        return datetime.datetime.today()
-    if d == 'YESTERDAY':
-        return datetime.datetime.today() - datetime.timedelta(days=1)
+    if d in ('TODAY', 'YESTERDAY'):
+        today = datetime.datetime.combine(datetime.datetime.today(),datetime.time(0))
+        if d == 'YESTERDAY':
+            return today - datetime.timedelta(days=1)
+        return today
 
     # basic test
     if (len(d) % 2) != 0:
