@@ -1,3 +1,9 @@
+loop-wrapper (3.4.0-1) xenial; urgency=low
+
+  * Add --progress-bar to display progress of processing (requires tqdm)
+  * Add --mute to suppress all output from the commands
+
+ -- Thomas Lavergne <thomas.lavergne@met.no>  Fri, 11 Aug 2017 16:31:55 +0200
 loop-wrapper (3.2.0-1) xenial; urgency=low
 
   * Re-allow --backwards looping for serial (non-PLL) runs
