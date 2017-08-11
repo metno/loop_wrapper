@@ -458,11 +458,15 @@ if __name__ == '__main__':
         if not args.quiet:
             print "Parallel ({} cpu) run {} from {} to {}".format(psize,CMD,args.FROM_DATE,args.TO_DATE)
 
+        results = [0,]*len(cmds,)
         pool = Pool(psize)
-        p = pool.map_async(partial_run_shell,cmds)
         try:
             timeout = None
-            results = p.get(timeout)
+            for i,res in enumerate(pool.imap_unordered(partial_run_shell,cmds)):
+                results[i] = res
+                if pbar:
+                    pbar.update()
+
             all_runs_ok = not sum(results)
         except KeyboardInterrupt:
             all_runs_ok = False
