@@ -183,7 +183,7 @@ def cpu_arg(d):
         raise argparse.ArgumentTypeError("Value cannot be zero")
     return d
 
-def run_shell(cmd,quiet=True,dry_run=False,ignore_CtrlC=False,die_on_error=True,):
+def run_shell(cmd,quiet=True,dry_run=False,ignore_CtrlC=False,die_on_error=True,mute=False):
     err = 0
     if not quiet:
         dryrun_str = ''
@@ -191,8 +191,14 @@ def run_shell(cmd,quiet=True,dry_run=False,ignore_CtrlC=False,die_on_error=True,
             dryrun_str = '(dry-run mode)'
         print "do {} ({})".format(dryrun_str,cmd,)
     if not dry_run:
+        sout = None
+        if mute:
+            sout = open(os.devnull, 'w')
+
         try:
-            subprocess.check_call(cmd,shell=True)
+            subprocess.check_call(cmd,shell=True,stdout=sout)
+            if sout:
+                sout.close()
         except subprocess.CalledProcessError as ex:
             err = 1
             if die_on_error:
@@ -288,7 +294,9 @@ if __name__ == '__main__':
     p.add_argument("--die-on-error", help="Stop looping as soon as one date fails",action='store_true',default=False)
     p.add_argument("--every", help="Loop every n units. Default unit is d:days, but H:hourly, m:monthly, Y:yearly are supported. For example '--every 6H' (6-hourly steps) or '--every 3m' (steps of 3 months)",default=(1,rrule.DAILY),type=every_arg)
     p.add_argument("--backwards", help="Start from TO_DATE and step backwards to FROM_DATE",action='store_true')
-    p.add_argument("--quiet", help="Prevent loop_wrapper to pring anything",action='store_true',default=False)
+    p.add_argument("--quiet", help="Prevent loop_wrapper to print anything",action='store_true',default=False)
+    p.add_argument("--mute", help="Turn off all output to screen (from loop_wrapper and from the commands)",
+                   action='store_true',default=False)
     p.add_argument("--cpu", help="Number of cpus for parallel runs (defaults to 1: serial run). Can be 'all', in which case all available cpus are used. Can also be a negative number, in which case it indicates how many cpus to spare. E.g. --cpu -2 means 'use all cpus but 2'.",default=1,type=cpu_arg)
     p.add_argument("-v","--version",
                    help="print version number and exits",action='version',
@@ -312,6 +320,9 @@ if __name__ == '__main__':
     if args.email_when_done and not args.dry_run and not email_to:
         # asking for an email, but no mail address available
         sys.exit("Sorry, we could not guess an e-mail address for you (USER not set in ENV)")
+
+    if args.mute:
+        args.quiet = True
 
     CMD = ' '.join(args.command)
     if not args.quiet:
@@ -418,12 +429,12 @@ if __name__ == '__main__':
     if args.progress_bar:
         pbar = tqdm(total=len(cmds))
 
-
     # Create a "partial" command when many keyword arguments are common to all runs.
     #    Note that ignore_CtrlC will be True for PLL processing (the childs will ignore Ctrl-C, but the
     #    master job will capture it (see below)).
     partial_run_shell = partial(run_shell, quiet=args.quiet, dry_run=args.dry_run, 
-                                ignore_CtrlC=(args.cpu!=1),die_on_error=args.die_on_error,)
+                                ignore_CtrlC=(args.cpu!=1),die_on_error=args.die_on_error,
+                                mute=args.mute)
 
     all_runs_ok = True
     # do the jobs (serial or pll)
