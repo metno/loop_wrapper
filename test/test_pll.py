@@ -26,7 +26,6 @@ class Test_ParallelRun(unittest.TestCase):
         # are used by the tool.
         # test they do NOT have all same PPID (parent's PID)
         #s = set([(p.split(' '))[1] for p in lines])
-        #print len(s), cpu_count()-1, s
         #self.assertEqual(len(s),min(cpu_count()-1,len(lines)),msg='Basic parallel date looping (cpu -1) failed (used {} cpus)'.format(len(s)))
 
     def test_PLL_ALL(self):
@@ -35,13 +34,11 @@ class Test_ParallelRun(unittest.TestCase):
         out = check_output(cmd,shell=True)
         lines = out.splitlines()
         # test we have the expected number of subprocesses
-        print len(lines), sorted(lines)
         self.assertEqual(len(lines),17,msg='Basic parallel date looping (cpu all) failed (un-expected looping)!')
         # test they do NOT have all same PPID (parent's PID)
         # For some reason, it is more difficult than expected to control how many processors/cores
         # are used by the tool.
         #s = set([(p.split(' '))[1] for p in lines])
-        #print len(s), cpu_count(), s
         #self.assertEqual(len(s),min(cpu_count(),len(lines)),msg='Basic parallel date looping (cpu all) failed (used {} cpus)'.format(len(s)))
 
     def test_PLL_2(self):
@@ -50,7 +47,6 @@ class Test_ParallelRun(unittest.TestCase):
         out = check_output(cmd,shell=True)
         lines = out.splitlines()
         # test we have the expected number of subprocesses
-        print len(lines), lines
         self.assertEqual(len(lines),17,msg='Basic parallel date looping (cpu 2) failed (un-expected looping)!')
         # test they do NOT have all same PPID (parent's PID)
         s = set([(p.split(' '))[1] for p in lines])

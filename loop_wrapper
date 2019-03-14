@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #============================================================
 #    loop_wrapper
-#    Copyright (C) 2014-2017  Thomas Lavergne
+#    Copyright (C) 2014-2019  Thomas Lavergne
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -49,7 +49,8 @@
 # Thomas Lavergne, met.no/FoU, 23.06.2017    :   re-allow --backwards looping for serial (aka non-PLL) runs
 # Thomas Lavergne, met.no/FoU, 24.06.2017    :   change TODAY and YESTERDAY to be at 0 UTC (instead of utcnow)
 # Thomas Lavergne, met.no/FoU, 11.08.2017    :   add optional --progress-bar (requires tqdm)
-# Thomas Lavergne, met.no/FoU, 11.08.2017    :   add --mute 
+# Thomas Lavergne, met.no/FoU, 11.08.2017    :   add --mute
+# Thomas Lavergne, met.no/FoU, 14.03.2019    :   port to python3 syntax
 #============================================================
 #============================================================
 
@@ -70,7 +71,7 @@ try:
 except ImportError:
     has_tqdm = False
 
-__version__ = '3.4.0'
+__version__ = '3.5.0'
 __author__  = 'Thomas Lavergne'
 __license__ = 'GPLv2'
 
@@ -105,7 +106,7 @@ def date_str_len(fmt):
     if (len(fmt) % 2) != 0:
         raise ValueError("The date formats should only have even lengths ({} has length {})".format(fmt,len(fmt)))
     new_fmt = ''
-    for i in range(len(fmt)/2):
+    for i in range(len(fmt)//2):
         lettercode = fmt[2*i+1:2*i+2]
         try:
             new_fmt += lettercode * date_fmts_rep[lettercode]
@@ -190,7 +191,7 @@ def run_shell(cmd,quiet=True,dry_run=False,ignore_CtrlC=False,die_on_error=True,
         dryrun_str = ''
         if dry_run:
             dryrun_str = '(dry-run mode)'
-        print "do {} ({})".format(dryrun_str,cmd,)
+        print("do {} ({})".format(dryrun_str,cmd,))
     if not dry_run:
         sout = None
         if mute:
@@ -229,7 +230,7 @@ def do_shell_parameter_expansion(cmd):
     elems = cmd.split()
 
     # expand all the elements through globbing
-    globs = range(len(elems))
+    globs = list(range(len(elems)))
     shell_expansion_success = False
     for ie, e in enumerate(elems):
         if e.startswith('[') and e.endswith(']'):
@@ -327,7 +328,7 @@ if __name__ == '__main__':
 
     CMD = ' '.join(args.command)
     if not args.quiet:
-        print "CMD is {}".format(CMD,)
+        print("CMD is {}".format(CMD,))
 
     # Special case if {d:} is used (empty dateformat string):
     CMD = CMD.replace('{d:}','{d:%Y%m%d}')
@@ -338,7 +339,7 @@ if __name__ == '__main__':
 
     # Check the validity of the CMD: 1) does it require a d= date.
     try:
-        CMD.format(d=None,f='{f:}',F='{F:}')
+        CMD.format(d='foo',f='{f:}',F='{F:}')
     except ValueError:
         pass # this is ok: we want the CMD to fail if an invalid date is provided
     except Exception as ex:
@@ -350,7 +351,7 @@ if __name__ == '__main__':
 
     # Check the validity of the CMD: 3) can we format it with d=today
     try:
-        CMD.format(d=datetime.date.today(),f='{f:}',F='{F:}')
+        cmd = CMD.format(d=datetime.date.today(),f='{f:}',F='{F:}')
     except Exception as ex:
         sys.exit("Got exception when using CMD with d=today: {}".format(ex))
 
@@ -392,9 +393,9 @@ if __name__ == '__main__':
                     # this means the cmd had [shell-parameter-expansion], but that it did not glob to a path
                     msg = "The shell expansion [{}] did not expand to any path!".format((loop_cmd[0].split())[shell_expansion_index])
                     if args.die_on_error:
-                        print "ERROR! {}".format(msg,)
+                        print("ERROR! {}".format(msg,))
                     else:
-                        print "WARNING! {}".format(msg,)
+                        print("WARNING! {}".format(msg,))
                     all_cmds_ok = False
                 else:
                     # ok with the parameter expansion...
@@ -407,6 +408,7 @@ if __name__ == '__main__':
                             loop_cmd[icmd] = lcmd
                     cmds.extend(loop_cmd)
         except Exception as ex:
+            raise(ex)
             msg = "Got exception with preparing cmd for {}: {}".format(loop_date,ex)
             sys.exit("ERROR {}".format(msg))
 
@@ -421,9 +423,9 @@ if __name__ == '__main__':
         dry_run_msg  = "*"*60 + "\n"
         dry_run_msg += "\tDRY-RUN MODE! Commands are printed to screen but NOT run\n"
         dry_run_msg += "*"*60 + "\n"
-        print dry_run_msg
+        print(dry_run_msg)
         if args.email_when_done:
-            print "Will NOT send you an email (--dry-run)"
+            print("Will NOT send you an email (--dry-run)")
 
     # prepare/instantiate the tqdm progress bar
     pbar = None
@@ -442,7 +444,7 @@ if __name__ == '__main__':
     begin_of_run = datetime.datetime.now()
     if args.cpu == 1:
         if not args.quiet:
-            print "Serial run {} from {} to {}".format(CMD,args.FROM_DATE,args.TO_DATE)
+            print("Serial run {} from {} to {}".format(CMD,args.FROM_DATE,args.TO_DATE))
         results = [0,]*len(cmds,)
         for icmd, cmd in enumerate(cmds):
             try:
@@ -452,10 +454,10 @@ if __name__ == '__main__':
                 results[icmd] = 1
                 msg = "Got exception when running cmd {}: {}".format(cmd,ex)
                 if args.die_on_error:
-                    print "ERROR {}".format(msg)
+                    print("ERROR {}".format(msg))
                     break
                 else:
-                    print "WARNING {}".format(msg)
+                    print("WARNING {}".format(msg))
             if pbar:
                 pbar.update()
 
@@ -469,7 +471,7 @@ if __name__ == '__main__':
             psize = args.cpu
 
         if not args.quiet:
-            print "Parallel ({} cpu) run {} from {} to {}".format(psize,CMD,args.FROM_DATE,args.TO_DATE)
+            print("Parallel ({} cpu) run {} from {} to {}".format(psize,CMD,args.FROM_DATE,args.TO_DATE))
 
         results = [0,]*len(cmds,)
         pool = Pool(psize)
@@ -485,15 +487,15 @@ if __name__ == '__main__':
             all_runs_ok = False
             pool.terminate()
             pool.close()
-            print "Received KeyboardInterrupt (Ctrl-C). Aborting master and all PLL child processes."
+            print("Received KeyboardInterrupt (Ctrl-C). Aborting master and all PLL child processes.")
         except TimeoutError:
             all_runs_ok = False
             pool.terminate()
             pool.close()
-            print "Received TimeoutError from the pool (timeout is set to {}s). Aborting master and all PLL child processes.".format(timeout,)
+            print("Received TimeoutError from the pool (timeout is set to {}s). Aborting master and all PLL child processes.".format(timeout,))
         except Exception as ex:
             all_runs_ok = False
-            print "Caught an Exception in the pool ({})".format(ex,)
+            print("Caught an Exception in the pool ({})".format(ex,))
             pool.terminate()
             pool.close()
 
@@ -502,8 +504,8 @@ if __name__ == '__main__':
         pbar.close()
 
     if not args.quiet:
-        print "Done"
-        print dry_run_msg
+        print("Done")
+        print(dry_run_msg)
 
     end_of_run = datetime.datetime.now()
 

@@ -20,36 +20,36 @@ class Test_Basic(unittest.TestCase):
     def test_error_when_no_datestr(self):
         """ Test an error is triggered if no {d:} construct is found """
         cmd = exe + '--quiet 20040225 20040303 echo missing'
-        p = Popen(cmd,stdout=PIPE,stderr=STDOUT,shell=True)
+        p = Popen(cmd,stdout=PIPE,stderr=STDOUT,shell=True, universal_newlines=True)
         out, err = p.communicate()
         self.assertNotEqual(p.returncode,0,msg='This run should have failed!')
 
     def test_format_with_empty_datestr(self):
         """ Test use of {d:} (empty datestr format) is valid, and defaults to %Y%m%d """
         cmd = [exe,'--quiet','20040225','20040303','echo','{d:}']
-        out = check_output(cmd)
+        out = check_output(cmd, universal_newlines=True)
         lines = out.splitlines()
         lengths = [len(d) for d in lines]
-        print lines, lengths
         self.assertEqual(set(lengths),set([8,]),
                          msg='Date looping with {{d:}} shortcut failed (got {} instead of YYYYMMDD)!'.format(lines[0]))
 
     def test_echo_doer(self):
         """ Test basic date looping with 1-day step (with and without ENV) """
         cmd = [exe,'--quiet','20040225','20040303','echo','{d:%Y%m%d}']
-        out = check_output(cmd)
+        out = check_output(cmd, universal_newlines=True)
         lines = out.splitlines()
+        print(out, lines)
         self.assertEqual(len(lines),8,msg='Basic date looping failed!')
         cmd2 = [env_cmd,'-i',]
         cmd2.extend(cmd,)
-        out = check_output(cmd2)
+        out = check_output(cmd2, universal_newlines=True)
         lines = out.splitlines()
         self.assertEqual(len(lines),8,msg='Basic date looping failed (when ENV is empty)!')
 
     def test_quiet(self):
         """ Test the --quiet flag """
         cmd = [exe,'--quiet','{:%Y%m%d}'.format(date.today(),),'{:%Y%m%d}'.format(date.today(),),'echo','{d:%Y}']
-        out = check_output(cmd,stderr=STDOUT)
+        out = check_output(cmd,stderr=STDOUT, universal_newlines=True)
         lines = out.splitlines()
         self.assertEqual(len(lines),1,msg='The --quiet flag does not work (got {} lines of output)'.format(len(lines)))
         self.assertEqual(str(date.today().year),lines[0],
@@ -58,14 +58,16 @@ class Test_Basic(unittest.TestCase):
     def test_call_noENV(self):
         """ Test we can call the script in a 'crontab-like' environment (missing ENV) """
         cmd = [env_cmd,'-i',exe,'-v']
-        out = check_output(cmd,stderr=STDOUT)
+        out = check_output(cmd, stderr=STDOUT,)
+        print(type(out), out)
         self.assertEqual('loop_wrapper',out.split(' ')[0],
                          msg='Did not manage to system call to loop_wrapper')
 
     def test_call(self):
         """ Test we can call the binary and retrieve some stdout/sterr text """
         cmd = [exe,'-v']
-        out = check_output(cmd,stderr=STDOUT)
+        out = check_output(cmd,stderr=STDOUT, universal_newlines=True)
+        print(type(out),out)
         self.assertEqual('loop_wrapper',out.split(' ')[0],
                          msg='Did not manage to system call to loop_wrapper')
 

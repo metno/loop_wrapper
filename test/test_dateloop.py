@@ -76,8 +76,6 @@ class Test_Every(unittest.TestCase):
         cmd = [exe,'--quiet','--every','45M','20040225','20040226','echo','{d:%Y%m%d %H%M}']
         out = check_output(cmd)
         lines = out.splitlines()
-        print lines
-        print len(lines)
         self.assertEqual(len(lines),33,msg='Date looping with "--every 45M" failed!')
 
     def test_every_H(self):

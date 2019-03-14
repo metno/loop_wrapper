@@ -24,7 +24,6 @@ class Test_ShellExpansion_wF(unittest.TestCase):
                '['+os.path.join(tst_dir,'{d:%Y}','tst_A_{d:%Y%m%d}.tar')+']','/tmp/{F:}.gz']
         out = check_output(cmd)
         lines = out.splitlines()
-        print len(lines),lines
         self.assertEqual(len(lines),6,msg='Basic substitution with {F:} failed when no wildcards are used')
         # Test the {F:} substitution worked as expected
         ok_lines = 0
@@ -101,7 +100,7 @@ class Test_ShellExpansion_noF(unittest.TestCase):
             if os.path.exists(fn):
                 ok_lines += 1
             else:
-                print "ERROR: file {} should exist!".format(fn,)
+                print("ERROR: file {} should exist!".format(fn,))
         self.assertEqual(ok_lines,12,msg='Basic shell expansion failed')
 
     def test_shell_expansion_Qmark_noF(self):

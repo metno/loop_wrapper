@@ -82,7 +82,6 @@ class Test_DateParse(unittest.TestCase):
         cmd = [exe,'--quiet','201003',self.stop_date,'echo','{d:%Y%m%d}']
         out = check_output(cmd)
         lines = out.splitlines()
-        print len(lines), lines
         self.assertEqual(len(lines),15,'Parsing YYYYMM date failed!')
 
     def test_parse_YYYY(self):
@@ -90,7 +89,6 @@ class Test_DateParse(unittest.TestCase):
         cmd = [exe,'--quiet','2010',self.stop_date,'echo','{d:%Y%m%d}']
         out = check_output(cmd)
         lines = out.splitlines()
-        print len(lines), lines
         self.assertEqual(len(lines),74,'Parsing YYYY date failed!')
 
     def test_parse_TODAY_and_YESTERDAY(self):
@@ -98,6 +96,5 @@ class Test_DateParse(unittest.TestCase):
         cmd = [exe,'--quiet','YESTERDAY','TODAY','echo','{d:%Y%m%d}']
         out = check_output(cmd)
         lines = out.splitlines()
-        print len(lines), lines
         self.assertEqual(len(lines),2,'Parsing TODAY and YESTERDAY date failed!')
 
