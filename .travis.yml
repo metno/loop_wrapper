@@ -1,11 +1,7 @@
 language: python
 python:
   - 3.6
+  - 3.7
 script:
   - nosetests test
-addons:
-  apt:
-    packages:
-      - coreutils
-      - python-dateutil
 
