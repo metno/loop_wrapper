@@ -5,7 +5,7 @@
 
 Typical usage:
 
-The following will run ``my_script.py`` (could be .sh, .pl, .exe, etc...) at all specified dates, using 3 cpus on your machine: ::
+The following will run ``my_script.py`` (could be .sh, .pl, .exe, etc...) at all specified dates, using 3 cpus on your machine:
 
         [$] loop_wrapper --cpu 3 20150101 20150315 script.py {d:}
         my_script.py 20150101
