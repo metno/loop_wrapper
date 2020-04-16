@@ -45,6 +45,7 @@ class Test_ParallelRun(unittest.TestCase):
         """ Test parallel run with 2 CPUs """
         cmd = exe + ' --cpu 2 --quiet 20040125 20040210 \'echo \"{d:%Y%m%d} $PPID\"\''
         out = check_output(cmd,shell=True)
+        out = str(out)
         lines = out.splitlines()
         # test we have the expected number of subprocesses
         self.assertEqual(len(lines),17,msg='Basic parallel date looping (cpu 2) failed (un-expected looping)!')
@@ -56,6 +57,7 @@ class Test_ParallelRun(unittest.TestCase):
         """ Test serial run a simple loop """
         cmd = exe + ' --quiet 20040125 20040210 \'echo \"{d:%Y%m%d} $PPID\"\''
         out = check_output(cmd,shell=True)
+        out = str(out)
         lines = out.splitlines()
         # test we have the expected number of subprocesses
         self.assertEqual(len(lines),17,msg='Basic serial date looping failed (un-expected looping)!')

@@ -23,6 +23,7 @@ class Test_DieOnError(unittest.TestCase):
         cmd = exe + ' --die-on-error --cpu 2 --quiet 20100225 20100310 '+ doer + ' {d:%Y%m%d}'
         p = Popen(cmd,stdout=PIPE,stderr=STDOUT,shell=True)
         out, err = p.communicate()
+        out = str(out)
         ok_run = 0
         fail_run = 0
         for l in out.splitlines():
@@ -43,6 +44,7 @@ class Test_DieOnError(unittest.TestCase):
         cmd = exe + ' --cpu all --quiet 20100225 20100310 '+ doer + ' {d:%Y%m%d}'
         p = Popen(cmd,stdout=PIPE,stderr=STDOUT,shell=True)
         out, err = p.communicate()
+        out = str(out)
         ok_run = 0
         fail_run = 0
         for l in out.splitlines():
@@ -61,6 +63,7 @@ class Test_DieOnError(unittest.TestCase):
         cmd = [exe,'--die-on-error','--quiet','20100225','20100310',doer,'{d:%Y%m%d}']
         p = Popen(cmd,stdout=PIPE,stderr=STDOUT)
         out, err = p.communicate()
+        out = str(out)
         ok_run = 0
         fail_run = 0
         for l in out.splitlines():
@@ -79,6 +82,7 @@ class Test_DieOnError(unittest.TestCase):
         cmd = [exe,'--quiet','20100225','20100310',doer,'{d:%Y%m%d}']
         p = Popen(cmd,stdout=PIPE,stderr=STDOUT)
         out, err = p.communicate()
+        out = str(out)
         ok_run = 0
         fail_run = 0
         for l in out.splitlines():

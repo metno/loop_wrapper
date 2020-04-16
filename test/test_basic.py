@@ -60,7 +60,7 @@ class Test_Basic(unittest.TestCase):
         cmd = [env_cmd,'-i',exe,'-v']
         out = check_output(cmd, stderr=STDOUT,)
         print(type(out), out)
-        self.assertEqual('loop_wrapper',out.split(' ')[0],
+        self.assertEqual('loop_wrapper',str(out).split(' ')[0],
                          msg='Did not manage to system call to loop_wrapper')
 
     def test_call(self):
