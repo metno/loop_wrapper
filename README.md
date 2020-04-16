@@ -17,7 +17,12 @@ do_something_usefull 20150102,
 do_something_usefull 20150315
 
 For full documentation, and more cool features, see:
-loop_wrapper -h
+
+https://loop-wrapper.readthedocs.io/
+
+and
+
+``loop_wrapper -h``
 
 For questions, bug reports and feature requests:
 
