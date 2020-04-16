@@ -1,5 +1,5 @@
 .. loop_wrapper documentation master file, created by
-   sphinx-quickstart on Sat Jun 24 00:11:06 2017.
+   sphinx-quickstart on Thu Apr 16 20:06:47 2020.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
@@ -241,6 +241,7 @@ Verbosity and reporting
 Several options allow to control the level of verbosity and reporting from ``loop_wrapper`` runs.
 
 ``--quiet`` removes all output by ``loop_wrapper`` and only the output from the processing ``<COMMAND>`` are printed.
+
 
 Indices and tables
 ==================
