@@ -21,9 +21,8 @@ class Test_DieOnError(unittest.TestCase):
     def test_DoE_PLL_withFlag(self):
         """ Test pll run with --die-on-error """
         cmd = exe + ' --die-on-error --cpu 2 --quiet 20100225 20100310 '+ doer + ' {d:%Y%m%d}'
-        p = Popen(cmd,stdout=PIPE,stderr=STDOUT,shell=True)
+        p = Popen(cmd,stdout=PIPE,stderr=STDOUT,shell=True,universal_newlines=True)
         out, err = p.communicate()
-        out = str(out)
         ok_run = 0
         fail_run = 0
         for l in out.splitlines():
@@ -42,9 +41,8 @@ class Test_DieOnError(unittest.TestCase):
     def test_DoE_PLL_woutFlag(self):
         """ Test pll run without --die-on-error """
         cmd = exe + ' --cpu all --quiet 20100225 20100310 '+ doer + ' {d:%Y%m%d}'
-        p = Popen(cmd,stdout=PIPE,stderr=STDOUT,shell=True)
+        p = Popen(cmd,stdout=PIPE,stderr=STDOUT,shell=True,universal_newlines=True)
         out, err = p.communicate()
-        out = str(out)
         ok_run = 0
         fail_run = 0
         for l in out.splitlines():
@@ -61,9 +59,8 @@ class Test_DieOnError(unittest.TestCase):
     def test_DoE_serial_withFlag(self):
         """ Test serial run with --die-on-error """
         cmd = [exe,'--die-on-error','--quiet','20100225','20100310',doer,'{d:%Y%m%d}']
-        p = Popen(cmd,stdout=PIPE,stderr=STDOUT)
+        p = Popen(cmd,stdout=PIPE,stderr=STDOUT,universal_newlines=True)
         out, err = p.communicate()
-        out = str(out)
         ok_run = 0
         fail_run = 0
         for l in out.splitlines():
@@ -80,9 +77,8 @@ class Test_DieOnError(unittest.TestCase):
     def test_DoE_serial_woutFlag(self):
         """ Test serial run without --die-on-error """
         cmd = [exe,'--quiet','20100225','20100310',doer,'{d:%Y%m%d}']
-        p = Popen(cmd,stdout=PIPE,stderr=STDOUT)
+        p = Popen(cmd,stdout=PIPE,stderr=STDOUT,universal_newlines=True)
         out, err = p.communicate()
-        out = str(out)
         ok_run = 0
         fail_run = 0
         for l in out.splitlines():

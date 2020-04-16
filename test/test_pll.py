@@ -18,7 +18,7 @@ class Test_ParallelRun(unittest.TestCase):
     def test_PLL_1saved(self):
         """ Test parallel run with 1 saved CPUs """
         cmd = exe + ' --cpu -1 --quiet 20040125 20040210 \'echo \"{d:%Y%m%d} $PPID\"\''
-        out = check_output(cmd,shell=True)
+        out = check_output(cmd,shell=True,universal_newlines=True)
         lines = out.splitlines()
         # test we have the expected number of subprocesses
         self.assertEqual(len(lines),17,msg='Basic parallel date looping (cpu all) failed (un-expected looping)!')
@@ -31,7 +31,7 @@ class Test_ParallelRun(unittest.TestCase):
     def test_PLL_ALL(self):
         """ Test parallel run with all available CPUs """
         cmd = exe + ' --cpu all --quiet 20040125 20040210 \'echo \"{d:%Y%m%d} $PPID\"\''
-        out = check_output(cmd,shell=True)
+        out = check_output(cmd,shell=True,universal_newlines=True)
         lines = out.splitlines()
         # test we have the expected number of subprocesses
         self.assertEqual(len(lines),17,msg='Basic parallel date looping (cpu all) failed (un-expected looping)!')
@@ -44,8 +44,7 @@ class Test_ParallelRun(unittest.TestCase):
     def test_PLL_2(self):
         """ Test parallel run with 2 CPUs """
         cmd = exe + ' --cpu 2 --quiet 20040125 20040210 \'echo \"{d:%Y%m%d} $PPID\"\''
-        out = check_output(cmd,shell=True)
-        out = str(out)
+        out = check_output(cmd,shell=True,universal_newlines=True)
         lines = out.splitlines()
         # test we have the expected number of subprocesses
         self.assertEqual(len(lines),17,msg='Basic parallel date looping (cpu 2) failed (un-expected looping)!')
@@ -56,8 +55,7 @@ class Test_ParallelRun(unittest.TestCase):
     def test_serial(self):
         """ Test serial run a simple loop """
         cmd = exe + ' --quiet 20040125 20040210 \'echo \"{d:%Y%m%d} $PPID\"\''
-        out = check_output(cmd,shell=True)
-        out = str(out)
+        out = check_output(cmd,shell=True,universal_newlines=True)
         lines = out.splitlines()
         # test we have the expected number of subprocesses
         self.assertEqual(len(lines),17,msg='Basic serial date looping failed (un-expected looping)!')

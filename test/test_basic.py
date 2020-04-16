@@ -38,7 +38,6 @@ class Test_Basic(unittest.TestCase):
         cmd = [exe,'--quiet','20040225','20040303','echo','{d:%Y%m%d}']
         out = check_output(cmd, universal_newlines=True)
         lines = out.splitlines()
-        print(out, lines)
         self.assertEqual(len(lines),8,msg='Basic date looping failed!')
         cmd2 = [env_cmd,'-i',]
         cmd2.extend(cmd,)
@@ -58,16 +57,14 @@ class Test_Basic(unittest.TestCase):
     def test_call_noENV(self):
         """ Test we can call the script in a 'crontab-like' environment (missing ENV) """
         cmd = [env_cmd,'-i',exe,'-v']
-        out = check_output(cmd, stderr=STDOUT,)
-        print(type(out), out)
-        self.assertEqual('loop_wrapper',str(out).split(' ')[0],
+        out = check_output(cmd, stderr=STDOUT, universal_newlines=True)
+        self.assertEqual('loop_wrapper',out.split(' ')[0],
                          msg='Did not manage to system call to loop_wrapper')
 
     def test_call(self):
         """ Test we can call the binary and retrieve some stdout/sterr text """
         cmd = [exe,'-v']
         out = check_output(cmd,stderr=STDOUT, universal_newlines=True)
-        print(type(out),out)
         self.assertEqual('loop_wrapper',out.split(' ')[0],
                          msg='Did not manage to system call to loop_wrapper')
 

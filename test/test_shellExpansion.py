@@ -22,8 +22,7 @@ class Test_ShellExpansion_wF(unittest.TestCase):
         """ Test combining date looping, no wildcard and {F:} referencing """
         cmd = [exe,'--quiet','20051228','20060102',doer3,
                '['+os.path.join(tst_dir,'{d:%Y}','tst_A_{d:%Y%m%d}.tar')+']','/tmp/{F:}.gz']
-        out = check_output(cmd)
-        out = str(out)
+        out = check_output(cmd,universal_newlines=True)
         lines = out.splitlines()
         self.assertEqual(len(lines),6,msg='Basic substitution with {F:} failed when no wildcards are used')
         # Test the {F:} substitution worked as expected
@@ -42,8 +41,7 @@ class Test_ShellExpansion_wF(unittest.TestCase):
         """ Test combining date looping, shell parameter expansion  (with '?') and {F:} referencing """
         cmd = [exe,'--quiet','20051228','20060102',doer3,
                '['+os.path.join(tst_dir,'{d:%Y}','tst_?_{d:%Y%m%d}.tar')+']','/tmp/{F:}.gz']
-        out = check_output(cmd)
-        out = str(out)
+        out = check_output(cmd,universal_newlines=True)
         lines = out.splitlines()
         self.assertEqual(len(lines),18,msg='Basic shell expansion with "?" failed')
         # Test the {F:} substitution worked as expected
@@ -62,8 +60,7 @@ class Test_ShellExpansion_wF(unittest.TestCase):
         """ Test combining date looping, shell parameter expansion  (with '?') and {f:} referencing """
         cmd = [exe,'--quiet','20051228','20060102',doer3,
                '['+os.path.join(tst_dir,'{d:%Y}','tst_?_{d:%Y%m%d}.tar')+']','{f:}.gz']
-        out = check_output(cmd)
-        out = str(out)
+        out = check_output(cmd,universal_newlines=True)
         lines = out.splitlines()
         self.assertEqual(len(lines),18,msg='Basic shell expansion with "?" failed')
         # Test the {f:} substitution worked as expected
@@ -93,8 +90,7 @@ class Test_ShellExpansion_noF(unittest.TestCase):
         """ Test combining date looping and shell parameter expansion  (with character ranges)"""
         cmd = [exe,'--quiet','20051228','20060102',doer2,
                '['+os.path.join(tst_dir,'{d:%Y}','tst_[A:B]_{d:%Y%m%d}.tar')+']']
-        out = check_output(cmd)
-        out = str(out)
+        out = check_output(cmd,universal_newlines=True)
         lines = out.splitlines()
         self.assertEqual(len(lines),12,msg='Basic shell expansion with "[A-B]" failed')
         # Test that the files exists
