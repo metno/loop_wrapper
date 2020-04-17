@@ -13,6 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/metno/loop_wrapper",
     packages=setuptools.find_packages(),
+    scripts=["loop_wrapper"],
     project_urls={
         "Documentation": "https://loop-wrapper.readthedocs.io",
         "Source Code": "https://github.com/metno/loop_wrapper",
