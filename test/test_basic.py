@@ -12,8 +12,6 @@ else:
     exe_dir = os.path.realpath(os.path.join(os.path.dirname(__file__),'..'))
 exe = os.path.join(exe_dir,'loop_wrapper')
 
-env_cmd = '/usr/bin/env'
-
 class Test_Basic(unittest.TestCase):
     """ Test the most basic functionalities """
 
@@ -34,16 +32,11 @@ class Test_Basic(unittest.TestCase):
                          msg='Date looping with {{d:}} shortcut failed (got {} instead of YYYYMMDD)!'.format(lines[0]))
 
     def test_echo_doer(self):
-        """ Test basic date looping with 1-day step (with and without ENV) """
+        """ Test basic date looping with 1-day step """
         cmd = [exe,'--quiet','20040225','20040303','echo','{d:%Y%m%d}']
         out = check_output(cmd, universal_newlines=True)
         lines = out.splitlines()
         self.assertEqual(len(lines),8,msg='Basic date looping failed!')
-        cmd2 = [env_cmd,'-i',]
-        cmd2.extend(cmd,)
-        out = check_output(cmd2, universal_newlines=True)
-        lines = out.splitlines()
-        self.assertEqual(len(lines),8,msg='Basic date looping failed (when ENV is empty)!')
 
     def test_quiet(self):
         """ Test the --quiet flag """
@@ -53,13 +46,6 @@ class Test_Basic(unittest.TestCase):
         self.assertEqual(len(lines),1,msg='The --quiet flag does not work (got {} lines of output)'.format(len(lines)))
         self.assertEqual(str(date.today().year),lines[0],
                          msg='The --quiet flag does not work as expected')
-
-    def test_call_noENV(self):
-        """ Test we can call the script in a 'crontab-like' environment (missing ENV) """
-        cmd = [env_cmd,'-i',exe,'-v']
-        out = check_output(cmd, stderr=STDOUT, universal_newlines=True)
-        self.assertEqual('loop_wrapper',out.split(' ')[0],
-                         msg='Did not manage to system call to loop_wrapper')
 
     def test_call(self):
         """ Test we can call the binary and retrieve some stdout/sterr text """
