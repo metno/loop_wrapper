@@ -1,5 +1,6 @@
 
 [![Build Status](https://travis-ci.org/metno/loop_wrapper.png?branch=master)](https://travis-ci.org/metno/loop_wrapper)
+[![Coverage Status](https://coveralls.io/repos/github/metno/loop_wrapper/badge.svg?branch=master)](https://coveralls.io/github/metno/loop_wrapper?branch=master)
 
 ``loop_wrapper`` will help iterate commands and scripts over a range of dates, and parallelize the runs.
 
