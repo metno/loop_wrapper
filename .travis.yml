@@ -2,8 +2,7 @@ language: python
 python:
   - 3.6
 before_install:
-  - pip install -r requirements.txt
-install:
+  - sudo apt-get -y install python-dateutil python3-dateutil
 script:
   - python -m unittest discover test/
 
