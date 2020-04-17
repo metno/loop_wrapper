@@ -1,8 +1,8 @@
 language: python
 python:
   - 3.6
-#install:
-#  - sudo apt-get install python3-dateutil
+before_install:
+  - sudo apt-get -y install python-dateutil python3-dateutil
 script:
   - python -m unittest discover test/
 
