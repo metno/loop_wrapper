@@ -13,6 +13,10 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/metno/loop_wrapper",
     packages=setuptools.find_packages(),
+    project_urls={
+        "Documentation": "https://loop-wrapper.readthedocs.io",
+        "Source Code": "https://github.com/metno/loop_wrapper",
+    },
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
