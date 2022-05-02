@@ -51,6 +51,7 @@
 # Thomas Lavergne, met.no/FoU, 11.08.2017    :   add optional --progress-bar (requires tqdm)
 # Thomas Lavergne, met.no/FoU, 11.08.2017    :   add --mute
 # Thomas Lavergne, met.no/FoU, 14.03.2019    :   port to python3 syntax
+# Atle Sørensen,   met.no/FoU, 02.05.2022    :   add option for relative date
 #============================================================
 #============================================================
 
@@ -70,6 +71,7 @@ try:
     has_tqdm = True
 except ImportError:
     has_tqdm = False
+import re
 
 __version__ = '3.5.0'
 __author__  = 'Thomas Lavergne'
@@ -125,7 +127,7 @@ def date_arg(d):
 
     # basic test
     if (len(d) % 2) != 0:
-        raise argparse.ArgumentTypeError("This date format is not supported (odd number of charaters)")
+        raise argparse.ArgumentTypeError("This date format is not supported (odd number of characters)")
 
     # Try all formats, returning at first match.
     for fmt in date_fmts:
@@ -254,6 +256,32 @@ def do_shell_parameter_expansion(cmd):
 
     return exp_cmd, shell_expansion_success
 
+def get_rdt(loop_date, rd_match):
+    # Return a date time based on input datetime and relative string of type {d+nX: or {d-nX:
+    op = rd_match[2]
+    n = int(rd_match[3:-2])
+    td_type = rd_match[-2]
+    if ( td_type == 'Y' ):
+        if ( op == '+' ):
+            loop_date.year = loop_date.year + n
+            return loop_date
+        elif ( op == '-' ):
+            loop_date.year = loop_date.year - n
+            return loop_date
+    elif ( td_type == 'd' ):
+        td = datetime.timedelta(days=n)
+    elif ( td_type == 'H' ):
+        td = datetime.timedelta(seconds=3600*n)
+    elif ( td_type == 'M' ):
+        td = datetime.timedelta(seconds=60*n)
+    elif ( td_type == 'S' ):
+        td = datetime.timedelta(seconds=n)
+    if ( op == '+' ):
+        return loop_date + td
+    elif ( op == '-' ):
+        return loop_date - td
+    
+
 if __name__ == '__main__':
     """
        loop_wrapper will run the command given as parameter on a range of dates.
@@ -329,9 +357,29 @@ if __name__ == '__main__':
     CMD = ' '.join(args.command)
     if not args.quiet:
         print("CMD is {}".format(CMD,))
-
+    
     # Special case if {d:} is used (empty dateformat string):
     CMD = CMD.replace('{d:}','{d:%Y%m%d}')
+
+    # Check if relative date is used
+    CMD_RD = CMD
+    rd = False
+    for rd_match in re.findall('{d[+-].*?:', CMD):
+        # Check relative dates and replace with regular date in CMD string
+        rd = True
+        try:
+            int(rd_match[2:-2])
+        except ValueError as e:
+            print('Invalid relative number: {}'.format(rd_match[2:-2]))
+            sys.exit(1)
+        if ( rd_match[-2] not in ['Y', 'd', 'H', 'M', 'S'] ):
+            print('Invalid relative type: {}'.format(rd_match[-2]))
+            sys.exit(1)
+        CMD = CMD.replace(rd_match, '{d:')
+    CMD = CMD.replace('{d:}','{d:%Y%m%d}') # New cases from above without format
+    for rd_match in re.findall('{d[+-].*?:}', CMD_RD):
+        # Cases without format for relative dates
+        CMD_RD = CMD_RD.replace(rd_match, rd_match.replace(':}', ':%Y%m%d}'))
 
     # Check the validity of the range
     if args.FROM_DATE > args.TO_DATE:
@@ -346,7 +394,7 @@ if __name__ == '__main__':
         sys.exit("It does not seem CMD uses {d:strftime-format}. Tell me how to loop through dates.")
 
     # Check the validity of the CMD: 2) does it have a {d:} construct
-    if not '{d:' in CMD:
+    if ( not '{d:' in CMD and not rd ):
         sys.exit("The command MUST hold a {d:strftime} construct!")
 
     # Check the validity of the CMD: 3) can we format it with d=today
@@ -380,7 +428,16 @@ if __name__ == '__main__':
     for loop_date in rrule.rrule(args.every[1], interval=args.every[0], dtstart=first_date, until=last_date)[::sign]:
         try:
             # perform date looping:
-            loop_cmd = CMD.format(d=loop_date,f='{f:}',F='{F:}')
+            if ( rd ):
+                for rd_match in re.findall('{d[+-].*?:.*?}', CMD_RD):
+                    idx = rd_match.index(':')
+                    rd = rd_match[0:idx+1]
+                    rel_date = get_rdt(loop_date, rd)
+                    rd_fmt = rd_match[idx+1:-1]
+                    CMD_RD = CMD_RD.replace(rd_match, rel_date.strftime(rd_fmt))
+                loop_cmd = CMD_RD.format(d=loop_date,f='{f:}',F='{F:}')
+            else:
+                loop_cmd = CMD.format(d=loop_date,f='{f:}',F='{F:}')
             # perform shell parameter expansion
             shell_expansion_index = has_shell_parameter_expansion(loop_cmd)
             if shell_expansion_index == -1:
