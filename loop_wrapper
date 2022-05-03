@@ -263,11 +263,11 @@ def get_rdt(loop_date, rd_match):
     td_type = rd_match[-2]
     if ( td_type == 'Y' ):
         if ( op == '+' ):
-            loop_date.year = loop_date.year + n
-            return loop_date
+            nd = datetime.datetime(loop_date.year + n, loop_date.month, loop_date.day)
+            return datetime.datetime.combine(nd, loop_date.time())
         elif ( op == '-' ):
-            loop_date.year = loop_date.year - n
-            return loop_date
+            nd = datetime.datetime(loop_date.year - n, loop_date.month, loop_date.day)
+            return datetime.datetime.combine(nd, loop_date.time())
     elif ( td_type == 'd' ):
         td = datetime.timedelta(days=n)
     elif ( td_type == 'H' ):
