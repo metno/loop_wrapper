@@ -434,8 +434,8 @@ if __name__ == '__main__':
                     rd = rd_match[0:idx+1]
                     rel_date = get_rdt(loop_date, rd)
                     rd_fmt = rd_match[idx+1:-1]
-                    CMD_RD = CMD_RD.replace(rd_match, rel_date.strftime(rd_fmt))
-                loop_cmd = CMD_RD.format(d=loop_date,f='{f:}',F='{F:}')
+                    loop_cmd = CMD_RD.replace(rd_match, rel_date.strftime(rd_fmt))
+                loop_cmd = loop_cmd.format(d=loop_date,f='{f:}',F='{F:}')
             else:
                 loop_cmd = CMD.format(d=loop_date,f='{f:}',F='{F:}')
             # perform shell parameter expansion
@@ -465,7 +465,7 @@ if __name__ == '__main__':
                             loop_cmd[icmd] = lcmd
                     cmds.extend(loop_cmd)
         except Exception as ex:
-            raise(ex)
+            #raise(ex)
             msg = "Got exception with preparing cmd for {}: {}".format(loop_date,ex)
             sys.exit("ERROR {}".format(msg))
 
