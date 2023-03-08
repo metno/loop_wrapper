@@ -257,7 +257,7 @@ def do_shell_parameter_expansion(cmd):
     return exp_cmd, shell_expansion_success
 
 def get_rdt(loop_date, rd_match):
-    # Return a date time based on input datetime and relative string of type {d+nX: or {d-nX:
+    # Return a datetime based on input datetime and relative string of type {d+nX: or {d-nX:
     op = rd_match[2]
     n = int(rd_match[3:-2])
     td_type = rd_match[-2]
@@ -268,6 +268,20 @@ def get_rdt(loop_date, rd_match):
         elif ( op == '-' ):
             nd = datetime.datetime(loop_date.year - n, loop_date.month, loop_date.day)
             return datetime.datetime.combine(nd, loop_date.time())
+    #elif ( td_type == 'm' ):
+    #    print(loop_date, rd_match)
+    #    if ( op == '+' ):
+    #        if ( loop_date.month + n > 12 ):
+    #            nd = datetime.datetime(loop_date.year + 1, loop_date.month + n - 12, loop_date.day)
+    #        else:
+    #            nd = datetime.datetime(loop_date.year, loop_date.month + n, loop_date.day)
+    #        return datetime.datetime.combine(nd, loop_date.time())
+    #    elif ( op == '-' ):
+    #        if ( loop_date.month - n < 1 ):
+    #            nd = datetime.datetime(loop_date.year - 1, 12 - (loop_date.month - n), loop_date.day)
+    #        else:
+    #            nd = datetime.datetime(loop_date.year, loop_date.month - n, loop_date.day)
+    #        return datetime.datetime.combine(nd, loop_date.time())
     elif ( td_type == 'd' ):
         td = datetime.timedelta(days=n)
     elif ( td_type == 'H' ):
@@ -308,6 +322,8 @@ if __name__ == '__main__':
     example_txt.append("Will run do_something for all netcdf files from and to directories structured as YYYY/MM/DD.")
     example_cmd.append("loop_wrapper 20130101 20130103 'nc2hdf [/tmp/{d:%Y/%m/%d}/amsr*.nc] ./{d:%Y/%m}/{F:}.hdf'")
     example_txt.append("Will apply the nc2hdf tool on all amsr*.nc files, and writing a .nc.hdf for each of them, in another location.")
+    example_cmd.append("loop_wrapper 20230101 20230105 echo ice_drift_nh_polstere-625_multi-oi_{d-3d:%Y%m%d}1200-{d-1d:%Y%m%d}1200.nc")
+    example_txt.append("Print filenames with relative dates")
     epilog = "examples:"
     for ex in range(len(example_cmd)):
         epilog += "\n\t{}\n\t\t{}".format(example_cmd[ex],example_txt[ex])
@@ -335,7 +351,7 @@ if __name__ == '__main__':
     p.add_argument("FROM_DATE",help="Earliest date in the loop. " + date_fmts_msg,type=date_arg)
     p.add_argument("TO_DATE", help="Latest date in the loop. Same formats as FROM_DATE.",type=date_arg)
     p.add_argument("command", nargs=argparse.REMAINDER,
-                   help="Command to run in the loop. Must contain a {d:strftime} construct (e.g. {d:%%Y.%%m.%%d}). Note that {d:} defaults to {d:%%Y%%m%%d}. The command may also contain paths with wildcards, in which case shell parameter expansion will be attempted for each date in the loop. These wildcard constructs must be enclosed in [ ]. May in addition contain constructs using {f:} or {F:} (e.g. <outir>/{F:}.nc) which will be substituted with the filenames (including extension) obtained through shell parameter expansion. {f:} will be substituted by the full filenames including path, while {F:} will be substituted by just the basename.")
+                   help="Command to run in the loop. Must contain a {d:strftime} construct (e.g. {d:%%Y.%%m.%%d}). Note that {d:} defaults to {d:%%Y%%m%%d}. Experimental support for use of relative dates (e.g. {d-1d:%%Y%%m%%d} for yesterday, {d+6H:%%Y%%m%%d%%H} for 6 hours ahead) The command may also contain paths with wildcards, in which case shell parameter expansion will be attempted for each date in the loop. These wildcard constructs must be enclosed in [ ]. May in addition contain constructs using {f:} or {F:} (e.g. <outir>/{F:}.nc) which will be substituted with the filenames (including extension) obtained through shell parameter expansion. {f:} will be substituted by the full filenames including path, while {F:} will be substituted by just the basename.")
     args = p.parse_args()
 
     if args.backwards and args.cpu > 1:
@@ -372,7 +388,7 @@ if __name__ == '__main__':
         except ValueError as e:
             print('Invalid relative number: {}'.format(rd_match[2:-2]))
             sys.exit(1)
-        if ( rd_match[-2] not in ['Y', 'd', 'H', 'M', 'S'] ):
+        if ( rd_match[-2] not in ['Y', 'd', 'H', 'M', 'S'] ): # 'm'
             print('Invalid relative type: {}'.format(rd_match[-2]))
             sys.exit(1)
         CMD = CMD.replace(rd_match, '{d:')
@@ -429,12 +445,13 @@ if __name__ == '__main__':
         try:
             # perform date looping:
             if ( rd ):
+                loop_cmd = CMD_RD
                 for rd_match in re.findall('{d[+-].*?:.*?}', CMD_RD):
                     idx = rd_match.index(':')
                     rd = rd_match[0:idx+1]
                     rel_date = get_rdt(loop_date, rd)
                     rd_fmt = rd_match[idx+1:-1]
-                    loop_cmd = CMD_RD.replace(rd_match, rel_date.strftime(rd_fmt))
+                    loop_cmd = loop_cmd.replace(rd_match, rel_date.strftime(rd_fmt))
                 loop_cmd = loop_cmd.format(d=loop_date,f='{f:}',F='{F:}')
             else:
                 loop_cmd = CMD.format(d=loop_date,f='{f:}',F='{F:}')
