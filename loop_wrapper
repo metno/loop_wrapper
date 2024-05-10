@@ -268,20 +268,6 @@ def get_rdt(loop_date, rd_match):
         elif ( op == '-' ):
             nd = datetime.datetime(loop_date.year - n, loop_date.month, loop_date.day)
             return datetime.datetime.combine(nd, loop_date.time())
-    #elif ( td_type == 'm' ):
-    #    print(loop_date, rd_match)
-    #    if ( op == '+' ):
-    #        if ( loop_date.month + n > 12 ):
-    #            nd = datetime.datetime(loop_date.year + 1, loop_date.month + n - 12, loop_date.day)
-    #        else:
-    #            nd = datetime.datetime(loop_date.year, loop_date.month + n, loop_date.day)
-    #        return datetime.datetime.combine(nd, loop_date.time())
-    #    elif ( op == '-' ):
-    #        if ( loop_date.month - n < 1 ):
-    #            nd = datetime.datetime(loop_date.year - 1, 12 - (loop_date.month - n), loop_date.day)
-    #        else:
-    #            nd = datetime.datetime(loop_date.year, loop_date.month - n, loop_date.day)
-    #        return datetime.datetime.combine(nd, loop_date.time())
     elif ( td_type == 'd' ):
         td = datetime.timedelta(days=n)
     elif ( td_type == 'H' ):
@@ -388,7 +374,7 @@ if __name__ == '__main__':
         except ValueError as e:
             print('Invalid relative number: {}'.format(rd_match[2:-2]))
             sys.exit(1)
-        if ( rd_match[-2] not in ['Y', 'd', 'H', 'M', 'S'] ): # 'm'
+        if ( rd_match[-2] not in ['Y', 'd', 'H', 'M', 'S'] ):
             print('Invalid relative type: {}'.format(rd_match[-2]))
             sys.exit(1)
         CMD = CMD.replace(rd_match, '{d:')
