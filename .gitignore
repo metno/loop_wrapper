@@ -41,3 +41,18 @@ ehthumbs.db
 ################
 *~
 
+# Python packaging
+dist/
+build/
+*.egg-info/
+.eggs/
+.Python
+[Bb]in
+[Ii]nclude
+[Ll]ib
+[Ll]ib64
+[Ll]ocal
+[Ss]cripts
+pyvenv.cfg
+.venv
+pip-selfcheck.json
