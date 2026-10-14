@@ -98,3 +98,54 @@ class Test_DateParse(unittest.TestCase):
         lines = out.splitlines()
         self.assertEqual(len(lines),2,'Parsing TODAY and YESTERDAY date failed!')
 
+    def test_reldate_format_year(self):
+        """ Test relative date formats (Y/d/H/M/S) """
+        cmd = [exe,'--quiet','20251231','20260101','echo','{d+1Y:%Y%m%dT%H%M%SZ}']
+        out = check_output(cmd)
+        lines = out.splitlines()
+        self.assertEqual(lines[0],b'20261231T000000Z','Error in reldate year')
+
+    def test_reldate_format_day(self):
+        cmd = [exe,'--quiet','20251231','20260101','echo','{d-45d:%Y%m%dT%H%M%SZ}']
+        out = check_output(cmd)
+        lines = out.splitlines()
+        self.assertEqual(lines[0],b'20251116T000000Z','Error in reldate day')
+
+    def test_reldate_format_hour(self):
+        cmd = [exe,'--quiet','20251231','20260101','echo','{d+11H:%Y%m%dT%H%M%SZ}']
+        out = check_output(cmd)
+        lines = out.splitlines()
+        self.assertEqual(lines[0],b'20251231T110000Z','Error in reldate hour')
+
+    def test_reldate_format_minute(self):
+        cmd = [exe,'--quiet','20251231','20260101','echo','{d+90M:%Y%m%dT%H%M%SZ}']
+        out = check_output(cmd)
+        lines = out.splitlines()
+        self.assertEqual(lines[0],b'20251231T013000Z','Error in reldate minute')
+
+    def test_reldate_format_second(self):
+        cmd = [exe,'--quiet','20251231','20260101','echo','{d+361S:%Y%m%dT%H%M%SZ}']
+        out = check_output(cmd)
+        lines = out.splitlines()
+        self.assertEqual(lines[0],b'20251231T000601Z','Error in reldate second')
+        
+    def test_reldate_year_rollover_multi(self):
+        """ Test relative date year rollover with multiple dates (and order of cmds with cpu=1) """
+        cmd = [exe,'--quiet','--cpu','1','20251231','20260101','echo','{d-1d:%Y%m%d}','{d+1d:%Y%m%d}']
+        out = check_output(cmd)
+        lines = out.splitlines()
+        self.assertEqual(lines[0],b'20251230 20260101','Error in reldate year rollover')
+        self.assertEqual(lines[1],b'20251231 20260102','Error in reldate year rollover')
+
+    def test_reldate_instring(self):
+        """ Test relative hour with/without hour in datestring (also for day) """
+        cmd = [exe,'--quiet','--cpu','1','20251231','20260101','echo','{d-1d:%Y%m%d}','{d+2H:%Y%m%d}','{d-1d:%Y%m}']
+        out = check_output(cmd)
+        lines = out.splitlines()
+        self.assertEqual(lines[0],b'20251230 20251231 202512','Error in reldate should not effecting string')
+
+        cmd = [exe,'--quiet','--cpu','1','20251231','20260101','echo','{d-1d:%Y%m%d%H%M}','{d+2H:%Y%m%d%H%M}','{d+1d:%Y%m}']
+        out = check_output(cmd)
+        lines = out.splitlines()
+        self.assertEqual(lines[0],b'202512300000 202512310200 202601','Error in reldate hour/day should effect string ')
+
