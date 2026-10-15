@@ -458,7 +458,8 @@ if __name__ == '__main__':
                     rd_fmt = rd_match[idx+1:-1]
                     loop_cmd = loop_cmd.replace(rd_match, rel_date.strftime(rd_fmt))
                 if bad_date:
-                    print(f'Warning, skipping bad date substitution: {loop_date.strftime("%Y%m%d"),rd_match}')
+                    if not args.quiet:
+                        print(f'Warning, skipping bad date substitution: {loop_date.strftime("%Y%m%d"),rd_match}')
                     continue
                 loop_cmd = loop_cmd.format(d=loop_date,f='{f:}',F='{F:}')
             else:
