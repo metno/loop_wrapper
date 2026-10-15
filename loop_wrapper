@@ -73,7 +73,7 @@ except ImportError:
     has_tqdm = False
 import re
 
-__version__ = '3.5.0'
+__version__ = '3.6.0'
 __author__  = 'Thomas Lavergne'
 __license__ = 'GPLv2'
 
@@ -261,24 +261,34 @@ def get_rdt(loop_date, rd_match):
     op = rd_match[2]
     n = int(rd_match[3:-2])
     td_type = rd_match[-2]
-    if ( td_type == 'Y' ):
-        if ( op == '+' ):
+    if td_type == 'Y':
+        if op == '+':
             nd = datetime.datetime(loop_date.year + n, loop_date.month, loop_date.day)
             return datetime.datetime.combine(nd, loop_date.time())
-        elif ( op == '-' ):
+        elif op == '-':
             nd = datetime.datetime(loop_date.year - n, loop_date.month, loop_date.day)
             return datetime.datetime.combine(nd, loop_date.time())
-    elif ( td_type == 'd' ):
+    if td_type == 'm':
+        # For months, need to convert to (0..11) index first (then convert back for new month)
+        if op == '+':
+            n_m = ((loop_date.month-1+n) % 12) + 1
+            n_y = loop_date.year + ((loop_date.month-1+n) // 12)
+        elif op == '-':
+            n_m = ((loop_date.month-1-n) % 12) + 1
+            n_y = loop_date.year + ((loop_date.month-1-n) // 12)
+        nd = datetime.datetime(n_y, n_m, loop_date.day)
+        return datetime.datetime.combine(nd, loop_date.time())
+    elif td_type == 'd':
         td = datetime.timedelta(days=n)
-    elif ( td_type == 'H' ):
+    elif td_type == 'H':
         td = datetime.timedelta(seconds=3600*n)
-    elif ( td_type == 'M' ):
+    elif td_type == 'M':
         td = datetime.timedelta(seconds=60*n)
-    elif ( td_type == 'S' ):
+    elif td_type == 'S':
         td = datetime.timedelta(seconds=n)
-    if ( op == '+' ):
+    if op == '+':
         return loop_date + td
-    elif ( op == '-' ):
+    elif op == '-':
         return loop_date - td
     
 
@@ -337,7 +347,7 @@ if __name__ == '__main__':
     p.add_argument("FROM_DATE",help="Earliest date in the loop. " + date_fmts_msg,type=date_arg)
     p.add_argument("TO_DATE", help="Latest date in the loop. Same formats as FROM_DATE.",type=date_arg)
     p.add_argument("command", nargs=argparse.REMAINDER,
-                   help="Command to run in the loop. Must contain a {d:strftime} construct (e.g. {d:%%Y.%%m.%%d}). Note that {d:} defaults to {d:%%Y%%m%%d}. Experimental support for use of relative dates (e.g. {d-1d:%%Y%%m%%d} for yesterday, {d+6H:%%Y%%m%%d%%H} for 6 hours ahead) The command may also contain paths with wildcards, in which case shell parameter expansion will be attempted for each date in the loop. These wildcard constructs must be enclosed in [ ]. May in addition contain constructs using {f:} or {F:} (e.g. <outir>/{F:}.nc) which will be substituted with the filenames (including extension) obtained through shell parameter expansion. {f:} will be substituted by the full filenames including path, while {F:} will be substituted by just the basename.")
+                   help="Command to run in the loop. Must contain a {d:strftime} construct (e.g. {d:%%Y.%%m.%%d}). Note that {d:} defaults to {d:%%Y%%m%%d}. Basic support for use of relative dates (e.g. {d-1d:%%Y%%m%%d} for yesterday, {d+6H:%%Y%%m%%d%%H} for 6 hours ahead) The command may also contain paths with wildcards, in which case shell parameter expansion will be attempted for each date in the loop. These wildcard constructs must be enclosed in [ ]. May in addition contain constructs using {f:} or {F:} (e.g. <outir>/{F:}.nc) which will be substituted with the filenames (including extension) obtained through shell parameter expansion. {f:} will be substituted by the full filenames including path, while {F:} will be substituted by just the basename.")
     args = p.parse_args()
 
     if args.backwards and args.cpu > 1:
@@ -374,7 +384,7 @@ if __name__ == '__main__':
         except ValueError as e:
             print('Invalid relative number: {}'.format(rd_match[2:-2]))
             sys.exit(1)
-        if ( rd_match[-2] not in ['Y', 'd', 'H', 'M', 'S'] ):
+        if ( rd_match[-2] not in ['Y', 'm', 'd', 'H', 'M', 'S'] ):
             print('Invalid relative type: {}'.format(rd_match[-2]))
             sys.exit(1)
         CMD = CMD.replace(rd_match, '{d:')
