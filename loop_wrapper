@@ -262,13 +262,15 @@ def get_rdt(loop_date, rd_match):
     n = int(rd_match[3:-2])
     td_type = rd_match[-2]
     if td_type == 'Y':
-        if op == '+':
-            nd = datetime.datetime(loop_date.year + n, loop_date.month, loop_date.day)
+        try:
+            if op == '+':
+                nd = datetime.datetime(loop_date.year + n, loop_date.month, loop_date.day)
+            elif op == '-':
+                nd = datetime.datetime(loop_date.year - n, loop_date.month, loop_date.day)
             return datetime.datetime.combine(nd, loop_date.time())
-        elif op == '-':
-            nd = datetime.datetime(loop_date.year - n, loop_date.month, loop_date.day)
-            return datetime.datetime.combine(nd, loop_date.time())
-    if td_type == 'm':
+        except ValueError:
+            return None
+    elif td_type == 'm':
         # For months, need to convert to (0..11) index first (then convert back for new month)
         if op == '+':
             n_m = ((loop_date.month-1+n) % 12) + 1
@@ -276,8 +278,11 @@ def get_rdt(loop_date, rd_match):
         elif op == '-':
             n_m = ((loop_date.month-1-n) % 12) + 1
             n_y = loop_date.year + ((loop_date.month-1-n) // 12)
-        nd = datetime.datetime(n_y, n_m, loop_date.day)
-        return datetime.datetime.combine(nd, loop_date.time())
+        try:
+            nd = datetime.datetime(n_y, n_m, loop_date.day)
+            return datetime.datetime.combine(nd, loop_date.time())
+        except ValueError:
+            return None
     elif td_type == 'd':
         td = datetime.timedelta(days=n)
     elif td_type == 'H':
@@ -442,12 +447,19 @@ if __name__ == '__main__':
             # perform date looping:
             if ( rd ):
                 loop_cmd = CMD_RD
+                bad_date = False
                 for rd_match in re.findall('{d[+-].*?:.*?}', CMD_RD):
                     idx = rd_match.index(':')
                     rd = rd_match[0:idx+1]
                     rel_date = get_rdt(loop_date, rd)
+                    if rel_date is None:
+                        bad_date = True
+                        break
                     rd_fmt = rd_match[idx+1:-1]
                     loop_cmd = loop_cmd.replace(rd_match, rel_date.strftime(rd_fmt))
+                if bad_date:
+                    print(f'Warning, skipping bad date substitution: {loop_date.strftime("%Y%m%d"),rd_match}')
+                    continue
                 loop_cmd = loop_cmd.format(d=loop_date,f='{f:}',F='{F:}')
             else:
                 loop_cmd = CMD.format(d=loop_date,f='{f:}',F='{F:}')
