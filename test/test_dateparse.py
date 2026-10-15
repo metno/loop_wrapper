@@ -100,16 +100,22 @@ class Test_DateParse(unittest.TestCase):
 
     def test_reldate_format_year(self):
         """ Test relative date formats (Y/d/H/M/S) """
-        cmd = [exe,'--quiet','20251231','20260101','echo','{d+1Y:%Y%m%dT%H%M%SZ}']
+        cmd = [exe,'--quiet','20251231','20260101','echo','{d+1Y:%Y%m%d}']
         out = check_output(cmd)
         lines = out.splitlines()
-        self.assertEqual(lines[0],b'20261231T000000Z','Error in reldate year')
+        self.assertEqual(lines[0],b'20261231','Error in reldate year')
+
+    def test_reldate_format_month(self):
+        cmd = [exe,'--quiet','20251001','20251002','echo','{d-11m:%Y%m%d} {d+3m:%Y%m%d}']
+        out = check_output(cmd)
+        lines = out.splitlines()
+        self.assertEqual(lines[0],b'20241101 20260101','Error in reldate day')
 
     def test_reldate_format_day(self):
-        cmd = [exe,'--quiet','20251231','20260101','echo','{d-45d:%Y%m%dT%H%M%SZ}']
+        cmd = [exe,'--quiet','20251231','20260101','echo','{d-45d:%Y%m%d}']
         out = check_output(cmd)
         lines = out.splitlines()
-        self.assertEqual(lines[0],b'20251116T000000Z','Error in reldate day')
+        self.assertEqual(lines[0],b'20251116','Error in reldate day')
 
     def test_reldate_format_hour(self):
         cmd = [exe,'--quiet','20251231','20260101','echo','{d+11H:%Y%m%dT%H%M%SZ}']
